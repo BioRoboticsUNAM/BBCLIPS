@@ -34,3 +34,13 @@
 		(printout ?*outlog* ?level ": " ?message crlf)
 	)
 )
+
+(deffunction setCmdTimer
+	(?time ?cmd ?id)
+	(python-call setCmdTimer ?time ?cmd ?id)
+)
+
+(deffunction setTimer
+	(?time ?sym)
+	(python-call setTimer ?time ?sym)
+)

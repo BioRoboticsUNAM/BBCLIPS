@@ -8,51 +8,72 @@ import Tkinter as tk
 import clipsFunctions
 import pyRobotics.BB as BB
 
-from pyRobotics.Messages import Command
+from pyRobotics.Messages import Command, Response
 from clipsFunctions import clips
 from GUI import clipsGUI
+from BBFunctions import ResponseReceived, CreateSharedVar, WriteSharedVar, SubscribeToSharedVar
 
 defaultTimeout = 2000
 defaultAttempts = 1
 gui = clipsGUI()
 
+def runCommand(c):
+    clipsFunctions.Assert('(BB_cmd "{0}" {1} "{2}")'.format(c.name, c._id, c.params))
+    clipsFunctions.PrintOutput()
+    clipsFunctions.Run(gui.getRunTimes())
+    clipsFunctions.PrintOutput()
+
 def setCmdTimer(t, cmd, cmdId):
-    t = threading.Thread(target=timerThread, args = (t, cmd, cmdId))
+    t = threading.Thread(target=cmdTimerThread, args = (t, cmd, cmdId))
     t.daemon = True
     t.start()
     return True
 
-def timerThread(t, cmd, cmdId):
+def cmdTimerThread(t, cmd, cmdId):
     time.sleep(t/1000)
     clipsFunctions.Assert('(BB_timer "{0}" {1})'.format(cmd, cmdId))
     clipsFunctions.PrintOutput()
     clipsFunctions.Run(gui.getRunTimes())
     clipsFunctions.PrintOutput()
-    
+
+def setTimer(t, sym):
+    t = threading.Thread(target=timerThread, args = (t, sym))
+    t.daemon = True
+    t.start()
+    return True
+
+def timerThread(t, sym):
+    time.sleep(t/1000)
+    clipsFunctions.Assert('(BB_timer {0})'.format(sym))
+    clipsFunctions.PrintOutput()
+    clipsFunctions.Run(gui.getRunTimes())
+    clipsFunctions.PrintOutput()
 
 def SendCommand(cmdName, params, timeout = defaultTimeout, attempts = defaultAttempts):
     cmd = Command(cmdName, params)
     BB.Send(cmd)
     return cmd._id
 
-def ResponseReceived(r):
-    clipsFunctions.Assert('(BB_received "{0}" {1} {2} "{3}")'.format(r.name, r._id, r.successful, r.params))
-    clipsFunctions.PrintOutput()
-    clipsFunctions.Run(gui.getRunTimes())
-    clipsFunctions.PrintOutput()
-
-def testSharedVarUpdated(s):
-    clipsFunctions.Assert('(BB_sv_updated {0} "{1}" )'.format('test_shared_var', s))
-    clipsFunctions.PrintOutput()
-    clipsFunctions.Run(gui.getRunTimes())
-    clipsFunctions.PrintOutput()
+def SendResponse(cmdName, cmd_id, result, response):
+    if str(result).lower() in ['false', '0']:
+        result = False
+    else:
+        result = True
+    r = Response(cmdName, result, response)
+    r._id = cmd_id
+    BB.Send(r)
 
 def Initialize():
     clips.Memory.Conserve = True
     clips.Memory.EnvironmentErrorsEnabled = True
     
     clips.RegisterPythonFunction(SendCommand)
+    clips.RegisterPythonFunction(SendResponse)
     clips.RegisterPythonFunction(setCmdTimer)
+    clips.RegisterPythonFunction(setTimer)
+    clips.RegisterPythonFunction(CreateSharedVar)
+    clips.RegisterPythonFunction(WriteSharedVar)
+    clips.RegisterPythonFunction(SubscribeToSharedVar)
     
     clips.BuildGlobal('defaultTimeout', defaultTimeout)
     clips.BuildGlobal('defaultAttempts', defaultAttempts)
@@ -63,8 +84,6 @@ def Initialize():
     BB.Initialize(2000, asyncHandler = ResponseReceived)
     
     BB.Start()
-    
-    BB.SubscribeToSharedVar('test_shared_var', testSharedVarUpdated)
     
 
 def main():

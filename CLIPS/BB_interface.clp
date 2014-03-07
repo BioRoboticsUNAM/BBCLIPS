@@ -16,13 +16,8 @@
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;		PYTHON FUNCTIONS
+;		BB FUNCTIONS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(deffunction setCmdTimer
-	(?time ?cmd ?id)
-	(python-call setCmdTimer ?time ?cmd ?id)
-)
-
 (deffunction send-command
 	; Receives: command, cmd_params and optionally
 	;timeout and number of attempts in case it times out or fails
@@ -44,6 +39,54 @@
 		(waiting (cmd ?cmd) (id ?id) (args ?args) (timeout ?timeout) (attempts ?attempts) )
 	)
 	(log-message INFO "Sent command: '" ?cmd "' - id: " ?id " - timeout: " ?timeout "ms - attempts: " ?attempts)
+)
+
+(deffunction send-response
+	(?cmd ?id ?result ?params)
+	(python-call SendResponse ?cmd ?id ?result ?params)
+	(log-message INFO "Sent response: '" ?cmd "' - id: " ?id " - result: " ?result "params: " ?params)
+)
+
+(deffunction create-shared_var
+	; Receives: type and name
+	;type is one of: byte[] | int | int[] | long | long[] | 
+	; double | double[] | string | matrix | RecognizedSpeech | var
+	(?type ?name)
+	(bind ?resp (python-call CreateSharedVar ?type ?name))
+	(if ?resp then
+		(log-message INFO "Created SharedVar: " ?name)
+	else
+		(log-message WARNING "SharedVar: '" ?name "' could NOT be created!")
+	)
+	(return ?resp)
+)
+
+(deffunction write-shared_var
+	; Receives: type, name and data
+	;type is one of: byte[] | int | int[] | long | long[] | 
+	; double | double[] | string | matrix | RecognizedSpeech | var
+	(?type ?name $?data)
+	(bind ?resp (python-call WriteSharedVar ?type ?name $?data))
+	(if ?resp then
+		(log-message INFO "Written to SharedVar: '" ?name "' - " $?data)
+	else
+		(log-message WARNING "Could NOT write to SharedVar: '" ?name "'")
+	)
+	(return ?resp)
+)
+
+(deffunction subscribe_to-shared_var
+	; Receives: name and optionally subscription type and report type
+	; Subscription type is one of: creation | writemodule | writeothers | writeany
+	; report type is one of: content | notify
+	(?name $?options)
+	(bind ?resp (python-call SubscribeToSharedVar ?name $?options) )
+	(if ?resp then
+		(log-message INFO "Subscribed to SharedVar: '" ?name "'")
+	else
+		(log-message WARNING "Could NOT subscribe to SharedVar: '" ?name "'")
+	)
+	(return ?resp)
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -123,8 +166,8 @@
 ;	HANDLE SHARED VAR UPDATES
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defrule BB-set_sv_update
-	?BB <-(BB_sv_updated ?var ?val)
+	?BB <-(BB_sv_updated ?var $?values)
 	=>
 	(retract ?BB)
-	(printout t "Shared var updated: " ?var crlf "value: " ?val crlf)
+	(printout t "Shared var updated: " ?var crlf "value: " $?values crlf)
 )
