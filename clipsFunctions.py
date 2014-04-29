@@ -20,6 +20,9 @@ def PrintOutput():
         print o
     o = clips.ErrorStream.Read()
     if o:
+        index = o.find('[PRCCODE4] Execution halted during the actions of defrule respond_command-rule.')
+        if index > -1:
+            o = o[:index] + o[index + 79:]
         print o
     
     if locked:

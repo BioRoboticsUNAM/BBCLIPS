@@ -6,22 +6,17 @@ import time, threading, os
 import Tkinter as tk
 
 import clipsFunctions
-import pyRobotics.BB as BB
-
-from pyRobotics.Messages import Command, Response
 from clipsFunctions import clips
-from GUI import clipsGUI
-from BBFunctions import ResponseReceived, CreateSharedVar, WriteSharedVar, SubscribeToSharedVar
+
+import pyRobotics.BB as BB
+from pyRobotics.Messages import Command, Response
+
+#from BBFunctions import gui
+from BBFunctions import ResponseReceived, CreateSharedVar, WriteSharedVar, SubscribeToSharedVar, RunCommand
 
 defaultTimeout = 2000
 defaultAttempts = 1
-gui = clipsGUI()
 
-def runCommand(c):
-    clipsFunctions.Assert('(BB_cmd "{0}" {1} "{2}")'.format(c.name, c._id, c.params))
-    clipsFunctions.PrintOutput()
-    clipsFunctions.Run(gui.getRunTimes())
-    clipsFunctions.PrintOutput()
 
 def setCmdTimer(t, cmd, cmdId):
     t = threading.Thread(target=cmdTimerThread, args = (t, cmd, cmdId))
@@ -33,8 +28,8 @@ def cmdTimerThread(t, cmd, cmdId):
     time.sleep(t/1000)
     clipsFunctions.Assert('(BB_timer "{0}" {1})'.format(cmd, cmdId))
     clipsFunctions.PrintOutput()
-    clipsFunctions.Run(gui.getRunTimes())
-    clipsFunctions.PrintOutput()
+    #clipsFunctions.Run(gui.getRunTimes())
+    #clipsFunctions.PrintOutput()
 
 def setTimer(t, sym):
     t = threading.Thread(target=timerThread, args = (t, sym))
@@ -46,8 +41,8 @@ def timerThread(t, sym):
     time.sleep(t/1000)
     clipsFunctions.Assert('(BB_timer {0})'.format(sym))
     clipsFunctions.PrintOutput()
-    clipsFunctions.Run(gui.getRunTimes())
-    clipsFunctions.PrintOutput()
+    #clipsFunctions.Run(gui.getRunTimes())
+    #clipsFunctions.PrintOutput()
 
 def SendCommand(cmdName, params, timeout = defaultTimeout, attempts = defaultAttempts):
     cmd = Command(cmdName, params)
@@ -55,10 +50,7 @@ def SendCommand(cmdName, params, timeout = defaultTimeout, attempts = defaultAtt
     return cmd._id
 
 def SendResponse(cmdName, cmd_id, result, response):
-    if str(result).lower() in ['false', '0']:
-        result = False
-    else:
-        result = True
+    result = str(result).lower() not in ['false', '0']
     r = Response(cmdName, result, response)
     r._id = cmd_id
     BB.Send(r)
@@ -81,7 +73,7 @@ def Initialize():
     filePath = os.path.dirname(os.path.abspath(__file__))
     clips.BatchStar(filePath + os.sep + 'CLIPS' + os.sep + 'BB_interface.clp')
     
-    BB.Initialize(2000, asyncHandler = ResponseReceived)
+    BB.Initialize(2000, functionMap = {'*':RunCommand}, asyncHandler = ResponseReceived)
     
     BB.Start()
     

@@ -15,7 +15,7 @@ class clipsGUI(object):
         _clipsLock.acquire()
         clips.DebugConfig.FactsWatched = True
         clips.DebugConfig.RulesWatched = True
-        clips.DebugConfig.FunctionsWatched = True
+        clips.DebugConfig.FunctionsWatched = False
         clips.DebugConfig.GlobalsWatched = True
         
         filePath = os.path.dirname(os.path.abspath(__file__))
@@ -29,10 +29,10 @@ class clipsGUI(object):
 
         self.watchFactsButton = tk.Button(self.topLevelWindow, width = 20, text = 'Watch Facts', bg = 'green', activebackground = 'green', command = self.toggleFactsWatched)
         self.watchRulesButton = tk.Button(self.topLevelWindow, width = 20, text = 'Watch Rules', bg = 'green', activebackground = 'green', command = self.toggleRulesWatched)
-        self.watchFunctionsButton = tk.Button(self.topLevelWindow, width = 20, text = 'Watch Functions', bg = 'green', activebackground = 'green', command = self.toggleFunctionsWatched)
+        self.watchFunctionsButton = tk.Button(self.topLevelWindow, width = 20, text = 'Watch Functions', bg = 'red', activebackground = 'red', command = self.toggleFunctionsWatched)
         self.watchGlobalsButton = tk.Button(self.topLevelWindow, width = 20, text = 'Watch Globals', bg = 'green', activebackground = 'green', command = self.toggleGlobalsWatched)
         
-        self.watchAllButton = tk.Button(self.topLevelWindow, text = 'WATCH ALL', bg = 'green', activebackground = 'green', command = self.toggleALLWatched)
+        self.watchAllButton = tk.Button(self.topLevelWindow, text = 'WATCH ALL', bg = 'red', activebackground = 'red', command = self.toggleALLWatched)
 
         self.logLevelVar = tk.StringVar(value = 'ERROR')
         self.logLevelLabel = tk.Label(self.topLevelWindow, text = "Log level:")

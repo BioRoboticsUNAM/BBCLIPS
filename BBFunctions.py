@@ -2,23 +2,34 @@
 '''
 @author: arcra
 '''
-from main import gui
 import clipsFunctions
 import pyRobotics.BB as BB
+from pyRobotics.Messages import Response
+from GUI import clipsGUI
+import time
 
-
+gui = clipsGUI()
 #####################################################
 #                HANDLERS
 #####################################################
+
+def RunCommand(c):
+    clipsFunctions.Assert('(BB_cmd "{0}" {1} "{2}")'.format(c.name, c._id, c.params))
+    clipsFunctions.PrintOutput()
+    clipsFunctions.Run()
+    clipsFunctions.PrintOutput()
+    time.sleep(1)
+    return Response.FromCommandObject(c, False, 'CLIPS was busy or not able to handle the command.')
+
 def ResponseReceived(r):
     clipsFunctions.Assert('(BB_received "{0}" {1} {2} "{3}")'.format(r.name, r._id, r.successful, r.params))
     clipsFunctions.PrintOutput()
-    clipsFunctions.Run(gui.getRunTimes())
-    clipsFunctions.PrintOutput()
+    #clipsFunctions.Run(gui.getRunTimes())
+    #clipsFunctions.PrintOutput()
 
 def SharedVarUpdated(sv):
     
-    s = '(BB_sv_updated "' + sv.varName + '" ' 
+    s = '(BB_sv_updated "' + sv.varName + '" '
     if sv.svType in [BB.SharedVarTypes.INT, BB.SharedVarTypes.LONG, BB.SharedVarTypes.DOUBLE]:
         s += str(sv.data)
     elif sv.svType in [BB.SharedVarTypes.INT_ARRAY, BB.SharedVarTypes.LONG_ARRAY, BB.SharedVarTypes.DOUBLE_ARRAY, BB.SharedVarTypes.BYTE_ARRAY]:
@@ -37,24 +48,23 @@ def SharedVarUpdated(sv):
     else:
         print 'ERROR: Parsing shared var: "{0}" failed'.format(sv.varName)
         return
-        
-    s += ')'
     
+    s += ')'
     clipsFunctions.Assert(s)
     clipsFunctions.PrintOutput()
-    clipsFunctions.Run(gui.getRunTimes())
-    clipsFunctions.PrintOutput()
+    #clipsFunctions.Run(gui.getRunTimes())
+    #clipsFunctions.PrintOutput()
 
 #####################################################
 #          SHARED VARIABLES MANIPULATION
 #####################################################
 def CreateSharedVar(sharedVarType, name):
-    return BB.CreateSharedVar( str(sharedVarType), name)
+    return BB.CreateSharedVar(str(sharedVarType).lower(), str(name))
 
-def WriteSharedVar(sharedVarType, name, *data):
+def WriteSharedVar(sharedVarType, name, data):
     
-    sharedVarType = str(sharedVarType)
-    
+    sharedVarType = str(sharedVarType).lower()
+    name = str(name)
     if sharedVarType in [BB.SharedVarTypes.INT, BB.SharedVarTypes.LONG, BB.SharedVarTypes.DOUBLE]:
         data = str(data[0])
     elif sharedVarType in [BB.SharedVarTypes.INT_ARRAY, BB.SharedVarTypes.LONG_ARRAY, BB.SharedVarTypes.DOUBLE_ARRAY]:
@@ -62,9 +72,9 @@ def WriteSharedVar(sharedVarType, name, *data):
     elif sharedVarType == BB.SharedVarTypes.BYTE_ARRAY:
         data = '0x' + ''.join([ "%02X" % x for x in data ])
     elif sharedVarType == BB.SharedVarTypes.STRING:
-        data = data[0]
-    elif sharedVarType == BB.SharedVarTypes.RECOGNIZED_SPEECH:
-        data = 1
+        data = str(data[0])
+    #elif sharedVarType == BB.SharedVarTypes.RECOGNIZED_SPEECH:
+    #    data = 1
     elif sharedVarType == BB.SharedVarTypes.VAR:
         pass
     elif sharedVarType == BB.SharedVarTypes.MATRIX:
@@ -78,16 +88,20 @@ def WriteSharedVar(sharedVarType, name, *data):
                 row.append(data[r*columns + c])
             l.append(row)
         data = l
-    else:
-        print 'ERROR: Writing to shared var: "{0}" failed'.format(name)
-        return
     
     return BB.WriteSharedVar(sharedVarType, name, data)
 
-def SubscribeToSharedVar(name, subscriptionType = 'WRITE_OTHERS', reportType = 'CONTENT'):
-    if subscriptionType not in [x for x in dir(BB.SubscriptionTypes) if x[:2] != "__"]:
-        return False
-    if reportType not in [x for x in dir(BB.ReportTypes) if x[:2] != "__"]:
-        return False
-    return BB.SubscribeToSharedVar(name, SharedVarUpdated, getattr(BB.SubscriptionTypes, subscriptionType), getattr(BB.ReportTypes, reportType))
+def SubscribeToSharedVar(name, options = []):
+    
+    subscriptionType = 'writeothers'
+    reportType = 'content'
+    
+    optionCount = len(options)
+    if optionCount > 0:
+        subscriptionType = str(options[0])
+    if optionCount > 1:
+        reportType = str(options[1])
+    
+    name = str(name)
+    return BB.SubscribeToSharedVar(name, SharedVarUpdated, subscriptionType, reportType)
     

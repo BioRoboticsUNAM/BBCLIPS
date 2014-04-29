@@ -45,6 +45,7 @@
 	(?cmd ?id ?result ?params)
 	(python-call SendResponse ?cmd ?id ?result ?params)
 	(log-message INFO "Sent response: '" ?cmd "' - id: " ?id " - result: " ?result "params: " ?params)
+	(halt)
 )
 
 (deffunction create-shared_var
@@ -53,7 +54,7 @@
 	; double | double[] | string | matrix | RecognizedSpeech | var
 	(?type ?name)
 	(bind ?resp (python-call CreateSharedVar ?type ?name))
-	(if ?resp then
+	(if (eq ?resp 1) then
 		(log-message INFO "Created SharedVar: " ?name)
 	else
 		(log-message WARNING "SharedVar: '" ?name "' could NOT be created!")
@@ -67,7 +68,7 @@
 	; double | double[] | string | matrix | RecognizedSpeech | var
 	(?type ?name $?data)
 	(bind ?resp (python-call WriteSharedVar ?type ?name $?data))
-	(if ?resp then
+	(if (eq ?resp 1) then
 		(log-message INFO "Written to SharedVar: '" ?name "' - " $?data)
 	else
 		(log-message WARNING "Could NOT write to SharedVar: '" ?name "'")
@@ -81,7 +82,7 @@
 	; report type is one of: content | notify
 	(?name $?options)
 	(bind ?resp (python-call SubscribeToSharedVar ?name $?options) )
-	(if ?resp then
+	(if (eq ?resp 1) then
 		(log-message INFO "Subscribed to SharedVar: '" ?name "'")
 	else
 		(log-message WARNING "Could NOT subscribe to SharedVar: '" ?name "'")
@@ -170,4 +171,14 @@
 	=>
 	(retract ?BB)
 	(printout t "Shared var updated: " ?var crlf "value: " $?values crlf)
+)
+
+(defrule BB-unknown-command
+	(declare (salience -10000))
+	?BB <-(BB_cmd ?cmd ?id ?params)
+	=>
+	(retract ?BB)
+	(send-response ?cmd ?id FALSE "unknown command")
+	(log-message WARNING "Unhandled command received: " ?cmd)
+	(halt)
 )
