@@ -11,7 +11,7 @@ from clipsFunctions import clips
 import pyRobotics.BB as BB
 from pyRobotics.Messages import Command, Response
 
-#from BBFunctions import gui
+#from GUI import gui
 from BBFunctions import ResponseReceived, CreateSharedVar, WriteSharedVar, SubscribeToSharedVar, RunCommand
 
 defaultTimeout = 2000

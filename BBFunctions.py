@@ -5,10 +5,9 @@
 import clipsFunctions
 import pyRobotics.BB as BB
 from pyRobotics.Messages import Response
-from GUI import clipsGUI
+from GUI import gui
 import time
 
-gui = clipsGUI()
 #####################################################
 #                HANDLERS
 #####################################################
@@ -24,8 +23,8 @@ def RunCommand(c):
 def ResponseReceived(r):
     clipsFunctions.Assert('(BB_received "{0}" {1} {2} "{3}")'.format(r.name, r._id, r.successful, r.params))
     clipsFunctions.PrintOutput()
-    #clipsFunctions.Run(gui.getRunTimes())
-    #clipsFunctions.PrintOutput()
+    clipsFunctions.Run(gui.getRunTimes())
+    clipsFunctions.PrintOutput()
 
 def SharedVarUpdated(sv):
     

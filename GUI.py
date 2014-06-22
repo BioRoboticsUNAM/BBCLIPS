@@ -302,11 +302,8 @@ class clipsGUI(object):
         
         print 'Files Loaded!'
 
-def StartGUI():
-    
-    clipsGUI()
-    
-    tk.mainloop()
+gui = clipsGUI()
 
 if __name__ == '__main__':
-    StartGUI()
+    tk.mainloop()
+
