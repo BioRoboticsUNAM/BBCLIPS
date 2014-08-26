@@ -8,5 +8,4 @@ This software depends on the library pyRobotics, which is our python API to crea
 
 These softwares are all part of the work developed at the Bio-Robotics Laboratory at UNAM, and are used in our service robots.
 
-This is for now provided as free for the public domain.
 There's currently no documentation (neither for BBCLIPS module, nor for the BlackBoard or the pyRobotics) and it is still in beta testing, but if someone should be interested in knowing more about any of these projects, you can contact me at adrianrc[dot]89[at]gmail[dot]com.
