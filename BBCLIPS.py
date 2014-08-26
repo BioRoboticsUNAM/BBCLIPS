@@ -103,7 +103,7 @@ def Initialize(port):
     BB.Initialize(port, functionMap = {'*':RunCommand}, asyncHandler = ResponseReceived)
     
     BB.Start()
-    
+    BB.SetReady()
 
 def main():
     
