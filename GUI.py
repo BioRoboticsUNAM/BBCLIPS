@@ -3,8 +3,11 @@
 @author: arcra
 '''
 
+import os
 import Tkinter as tk
-import tkFileDialog, tkMessageBox, os
+import tkFileDialog
+import tkMessageBox
+
 from clipsFunctions import clips, _clipsLock
 import clipsFunctions
 
@@ -281,22 +284,59 @@ class clipsGUI(object):
             tkMessageBox.showinfo('LOAD FILE', 'Click on the text box to select a file to be loaded.')
             return
         
+        module_path = os.path.dirname(os.path.abspath(filePath))
+        
+        _clipsLock.acquire()
+        clips.BuildGlobal('module_path', module_path + os.path.sep)
+        _clipsLock.release()
+        
         if filePath[-3:] == 'clp':
+            
             _clipsLock.acquire()
             clips.BatchStar(filePath)
+            clips.Reset()
             clipsFunctions.PrintOutput()
             _clipsLock.release()
             print 'File Loaded!'
             return
         
-        path = os.path.dirname(os.path.abspath(filePath))
-        f = open(filePath, 'r')
-        line = f.readline()
+        queue = [os.path.basename(filePath)]
+        
         _clipsLock.acquire()
-        while line:
-            clips.BatchStar((path + os.sep + line).strip())
-            line = f.readline()
-        f.close()
+        while queue:
+            el = queue.pop(0).strip()
+            if el[0] == ';':
+                continue
+            
+            filePath = str(os.path.join(module_path, el))
+            
+            if el[-3:] == 'clp':
+                try:
+                    clips.BatchStar(filePath)
+                except IOError:
+                    print 'ERROR: File ' + filePath + 'could not be open. Make sure that the path is correct.'
+                except Exception as e:
+                    print 'ERROR: An error occurred trying to open file: ' + filePath
+                    print e
+            elif el[-3:] == 'lst' or el[-3:] == 'dat':
+                try:
+                    dir_path = os.path.dirname(el)
+                    f = open(filePath, 'r')
+                    queue = [str(os.path.join(dir_path, x)) for x in f.readlines() if x.strip()[0] != ';'] + queue
+                    f.close()
+                except IOError:
+                    print 'ERROR: File ' + filePath + 'could not be open. Make sure that the path is correct.'
+                except Exception as e:
+                    print 'ERROR: An error occurred trying to open file: ' + filePath
+                    print e
+            else:
+                dot = filePath.rfind('.')
+                if dot == -1:
+                    print '...Skipping file without extension: ' + filePath
+                    continue
+                print '...Skipping unknown file extension: ' + filePath[dot:] 
+        
+        clips.Reset()
         clipsFunctions.PrintOutput()
         _clipsLock.release()
         

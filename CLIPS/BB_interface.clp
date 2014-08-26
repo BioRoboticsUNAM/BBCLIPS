@@ -13,15 +13,19 @@
 		(type INTEGER)
 		(range 1 ?VARIABLE)
 	)
+	(slot symbol
+		(type SYMBOL)
+	)
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;		BB FUNCTIONS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deffunction send-command
-	; Receives: command, cmd_params and optionally
-	;timeout and number of attempts in case it times out or fails
-	(?cmd ?args $?settings)
+	; Receives: command, symbol identifier, cmd_params and optionally
+	;timeout and number of attempts in case it times out or fails.
+	; Symbol identifier is useful for tracking responses through rules.
+	(?cmd ?sym ?args $?settings)
 	(bind ?timeout ?*defaultTimeout*)
 	(bind ?attempts ?*defaultAttempts*)
 	(switch (length$ $?settings)
@@ -34,18 +38,21 @@
 		)
 	)
 	(bind ?id (python-call SendCommand ?cmd ?args))
-	(setCmdTimer ?timeout ?cmd ?id)
+	(if (> ?timeout 0) then
+		(setCmdTimer ?timeout ?cmd ?id)
+	)
 	(assert
-		(waiting (cmd ?cmd) (id ?id) (args ?args) (timeout ?timeout) (attempts ?attempts) )
+		(waiting (cmd ?cmd) (id ?id) (args ?args) (timeout ?timeout) (attempts ?attempts) (symbol ?sym) )
 	)
 	(log-message INFO "Sent command: '" ?cmd "' - id: " ?id " - timeout: " ?timeout "ms - attempts: " ?attempts)
+	(return ?id)
 )
 
 (deffunction send-response
 	(?cmd ?id ?result ?params)
 	(python-call SendResponse ?cmd ?id ?result ?params)
 	(log-message INFO "Sent response: '" ?cmd "' - id: " ?id " - result: " ?result "params: " ?params)
-	(halt)
+;	(halt)
 )
 
 (deffunction create-shared_var
@@ -84,6 +91,9 @@
 	(bind ?resp (python-call SubscribeToSharedVar ?name $?options) )
 	(if (eq ?resp 1) then
 		(log-message INFO "Subscribed to SharedVar: '" ?name "'")
+		(assert 
+			(BB_subscribed_to_var ?name)
+		)
 	else
 		(log-message WARNING "Could NOT subscribe to SharedVar: '" ?name "'")
 	)
@@ -94,12 +104,15 @@
 ;		RULES TO HANDLE BB (PYTHON) ASSERTS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defrule BB-waiting-timedout-without_attempts
-	?w <-(waiting (cmd ?cmd) (id ?id) (attempts 1) (timeout ?timeout&~0) )
+	?w <-(waiting (cmd ?cmd) (id ?id) (attempts 1) (args ?args) (timeout ?timeout&~0) (symbol ?sym) )
 	?BB <-(BB_timer ?cmd ?id)
 	(not
 		(BB_received ?cmd ?id $?)
 	)
 	=>
+	(assert 
+		(BB_answer ?cmd ?sym 0 ?args)
+	)
 	(retract ?w ?BB)
 	(log-message WARNING "Command timedout w/o attempts: '" ?cmd "' - id: " ?id " - timeout: " ?timeout "ms")
 )
@@ -132,7 +145,20 @@
 	(log-message INFO "Sent command: '" ?cmd "' - id: " ?id " - timeout: " ?timeout "ms - attempts: " ?attempts)
 )
 
+(defrule BB-set_answer
+	?w <-(waiting (cmd ?cmd) (id ?id) (attempts ?attempts) (symbol ?sym))
+	?BB <-(BB_received ?cmd ?id ?result ?params)
+	(test (or (eq ?result 1) (eq ?attempts 1)))
+	=>
+	(retract ?w ?BB)
+	(assert 
+		(BB_answer ?cmd ?sym ?result ?params)
+	)
+	(log-message INFO "Answer received: '" ?cmd "' - id: " ?id " - successful: " ?result " - response: " ?params)
+)
+
 (defrule BB-clear-timers
+	(declare (salience -500))
 	?t <-(BB_timer ?cmd ?id)
 	(not
 		(waiting (cmd ?cmd) (id ?id))
@@ -143,6 +169,7 @@
 )
 
 (defrule BB-clear_response
+	(declare (salience -500))
 	?BB <-(BB_received ?cmd ?id $?)
 	(not
 		(waiting (cmd ?cmd) (id ?id))
@@ -152,17 +179,14 @@
 	(log-message WARNING "Clearing unhandled response from command: '" ?cmd "' - id: " ?id)
 )
 
-(defrule BB-set_answer
-	?w <-(waiting (cmd ?cmd) (id ?id) (attempts ?attempts))
-	?BB <-(BB_received ?cmd ?id ?result ?params)
-	(test (or (eq ?result 1) (eq ?attempts 1)))
+(defrule BB-clear_answer
+	(declare (salience -500))
+	?BB <-(BB_answer ?cmd ?sym ?result ?params)
 	=>
-	(retract ?w ?BB)
-	(assert 
-		(BB_answer ?cmd ?result ?params)
-	)
-	(log-message INFO "Answer received: '" ?cmd "' - id: " ?id " - successful: " ?result " - response: " ?params)
+	(retract ?BB)
+	(log-message INFO "Clearing answer from command: '" ?cmd "' - sym: " ?sym "' - result: " ?result "' - params: " ?params)
 )
+
 
 ;	HANDLE SHARED VAR UPDATES
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -170,7 +194,8 @@
 	?BB <-(BB_sv_updated ?var $?values)
 	=>
 	(retract ?BB)
-	(printout t "Shared var updated: " ?var crlf "value: " $?values crlf)
+	(log-message INFO "Shared var updated: " ?var "\t\t-\t\tvalue: " $?values)
+	;(printout t "Shared var updated: " ?var crlf "value: " $?values crlf)
 )
 
 (defrule BB-unknown-command
@@ -180,5 +205,5 @@
 	(retract ?BB)
 	(send-response ?cmd ?id FALSE "unknown command")
 	(log-message WARNING "Unhandled command received: " ?cmd)
-	(halt)
+;	(halt)
 )

@@ -43,4 +43,26 @@
 (deffunction setTimer
 	(?time ?sym)
 	(python-call setTimer ?time ?sym)
+	(assert (timer_sent ?sym))
+)
+
+(defrule clear_timers
+	(declare (salience -500))
+	?t <-(BB_timer ?)
+	=>
+	(retract ?t)
+)
+
+(defrule delete_old_timers
+	(declare (salience -500))
+	?t <-(timer_sent ?)	
+	=>
+	(retract ?t)
+)
+
+(deffunction sleep
+	(?ms)
+	(bind ?sym (gensym*))
+	(python-call sleep ?ms ?sym)
+	(halt)
 )

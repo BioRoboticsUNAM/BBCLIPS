@@ -3,9 +3,13 @@
 @author: arcra
 '''
 
-import clips, threading
+import time
+import threading
+import clips
 
 _clipsLock = threading.Lock()
+_sleepingLock = threading.Lock()
+sleeping = False
 
 
 def PrintOutput():
@@ -54,6 +58,18 @@ def Run(times = ''):
     _clipsLock.release()
     
 def Assert(fact):
-    _clipsLock.acquire()
-    clips.Assert(fact)
-    _clipsLock.release()
+    
+    asserted = False
+    
+    while not asserted:
+        _clipsLock.acquire()
+        try:
+            clips.Assert(fact)
+            asserted = True
+        except:
+            #print 'Fact: ' + str(fact) + ' could not be asserted, trying again...'
+            pass
+        _clipsLock.release()
+        if not asserted:
+            time.sleep(100)
+

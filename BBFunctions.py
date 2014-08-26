@@ -2,6 +2,7 @@
 '''
 @author: arcra
 '''
+from clipsFunctions import sleeping, _sleepingLock
 import clipsFunctions
 import pyRobotics.BB as BB
 from pyRobotics.Messages import Response
@@ -22,12 +23,14 @@ def RunCommand(c):
 
 def ResponseReceived(r):
     clipsFunctions.Assert('(BB_received "{0}" {1} {2} "{3}")'.format(r.name, r._id, r.successful, r.params))
-    clipsFunctions.PrintOutput()
-    clipsFunctions.Run(gui.getRunTimes())
-    clipsFunctions.PrintOutput()
+    _sleepingLock.acquire()
+    if not sleeping:
+        clipsFunctions.PrintOutput()
+        clipsFunctions.Run(gui.getRunTimes())
+        clipsFunctions.PrintOutput()
+    _sleepingLock.release()
 
 def SharedVarUpdated(sv):
-    
     s = '(BB_sv_updated "' + sv.varName + '" '
     if sv.svType in [BB.SharedVarTypes.INT, BB.SharedVarTypes.LONG, BB.SharedVarTypes.DOUBLE]:
         s += str(sv.data)
@@ -50,9 +53,12 @@ def SharedVarUpdated(sv):
     
     s += ')'
     clipsFunctions.Assert(s)
-    clipsFunctions.PrintOutput()
-    #clipsFunctions.Run(gui.getRunTimes())
-    #clipsFunctions.PrintOutput()
+    _sleepingLock.acquire()
+    if not sleeping:
+        clipsFunctions.PrintOutput()
+        clipsFunctions.Run(gui.getRunTimes())
+        clipsFunctions.PrintOutput()
+    _sleepingLock.release()
 
 #####################################################
 #          SHARED VARIABLES MANIPULATION
@@ -90,8 +96,10 @@ def WriteSharedVar(sharedVarType, name, data):
     
     return BB.WriteSharedVar(sharedVarType, name, data)
 
-def SubscribeToSharedVar(name, options = []):
+def SubscribeToSharedVar(name, options = None):
     
+    if not options:
+        options = []
     subscriptionType = 'writeothers'
     reportType = 'content'
     
