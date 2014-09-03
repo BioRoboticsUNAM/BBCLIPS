@@ -43,19 +43,20 @@
 (deffunction setTimer
 	(?time ?sym)
 	(python-call setTimer ?time ?sym)
-	(assert (timer_sent ?sym))
+	(assert (timer_sent ?sym (time) (/ ?time 1000.0)))
 )
 
 (defrule clear_timers
-	(declare (salience -500))
-	?t <-(BB_timer ?)
+	(declare (salience -1000))
+	?t <-(BB_timer $?)
 	=>
 	(retract ?t)
 )
 
 (defrule delete_old_timers
-	(declare (salience -500))
-	?t <-(timer_sent ?)	
+	(declare (salience -1000))
+	?t <-(timer_sent ? ?time ?duration)
+	(test (> (time) (+ ?time ?duration) ) )
 	=>
 	(retract ?t)
 )

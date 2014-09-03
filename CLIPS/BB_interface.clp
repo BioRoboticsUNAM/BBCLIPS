@@ -158,7 +158,7 @@
 )
 
 (defrule BB-clear-timers
-	(declare (salience -500))
+	(declare (salience -1000))
 	?t <-(BB_timer ?cmd ?id)
 	(not
 		(waiting (cmd ?cmd) (id ?id))
@@ -169,7 +169,7 @@
 )
 
 (defrule BB-clear_response
-	(declare (salience -500))
+	(declare (salience -1000))
 	?BB <-(BB_received ?cmd ?id $?)
 	(not
 		(waiting (cmd ?cmd) (id ?id))
@@ -180,7 +180,7 @@
 )
 
 (defrule BB-clear_answer
-	(declare (salience -500))
+	(declare (salience -1000))
 	?BB <-(BB_answer ?cmd ?sym ?result ?params)
 	=>
 	(retract ?BB)
