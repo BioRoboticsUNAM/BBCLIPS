@@ -23,12 +23,12 @@ def RunCommand(c):
 
 def ResponseReceived(r):
     clipsFunctions.Assert('(BB_received "{0}" {1} {2} "{3}")'.format(r.name, r._id, r.successful, r.params))
-    if gui.getRunTimes() > 0:
+    if gui.getRunTimes():
         return
     _sleepingLock.acquire()
     if not sleeping:
         clipsFunctions.PrintOutput()
-        clipsFunctions.Run(gui.getRunTimes())
+        clipsFunctions.Run()
         clipsFunctions.PrintOutput()
     _sleepingLock.release()
 
@@ -56,13 +56,13 @@ def SharedVarUpdated(sv):
     s += ')'
     clipsFunctions.Assert(s)
     
-    if gui.getRunTimes() > 0:
+    if gui.getRunTimes():
         return
     
     _sleepingLock.acquire()
     if not sleeping:
         clipsFunctions.PrintOutput()
-        clipsFunctions.Run(gui.getRunTimes())
+        clipsFunctions.Run()
         clipsFunctions.PrintOutput()
     _sleepingLock.release()
 
