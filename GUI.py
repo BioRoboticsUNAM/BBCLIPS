@@ -11,6 +11,9 @@ import tkMessageBox
 from clipsFunctions import clips, _clipsLock
 import clipsFunctions
 
+use_gui = True
+gui = None
+
 class clipsGUI(object):
     
     def __init__(self):
@@ -278,9 +281,16 @@ class clipsGUI(object):
     def getFileName(self, *args):
         self.fileVar.set(tkFileDialog.askopenfilename(filetypes = [('All possible files', '.clp'), ('All possible files', '.dat'), ('All possible files', '.lst'), ('CLIPS Batch file', '.clp'), ('File list', '.dat'), ('File list', '.lst')]))
     
-    def loadFile(self):
-        filePath = self.fileVar.get()
+    def loadFile(self, filename=None):
+        global use_gui
+        if filename:
+            filePath = filename
+        else:
+            filePath = self.fileVar.get()
         if not filePath:
+            if not use_gui:
+                print 'ERROR: No file specified.' 
+                return
             tkMessageBox.showinfo('LOAD FILE', 'Click on the text box to select a file to be loaded.')
             return
         
@@ -342,8 +352,7 @@ class clipsGUI(object):
         
         print 'Files Loaded!'
 
-gui = clipsGUI()
-
 if __name__ == '__main__':
+    gui = clipsGUI()
     tk.mainloop()
 

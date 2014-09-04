@@ -6,7 +6,7 @@ from clipsFunctions import sleeping, _sleepingLock
 import clipsFunctions
 import pyRobotics.BB as BB
 from pyRobotics.Messages import Response
-from GUI import gui
+from GUI import gui, use_gui
 import time
 
 #####################################################
@@ -23,7 +23,8 @@ def RunCommand(c):
 
 def ResponseReceived(r):
     clipsFunctions.Assert('(BB_received "{0}" {1} {2} "{3}")'.format(r.name, r._id, r.successful, r.params))
-    if gui.getRunTimes():
+    if use_gui and gui.getRunTimes():
+        clipsFunctions.PrintOutput()
         return
     _sleepingLock.acquire()
     if not sleeping:
@@ -56,7 +57,8 @@ def SharedVarUpdated(sv):
     s += ')'
     clipsFunctions.Assert(s)
     
-    if gui.getRunTimes():
+    if use_gui and gui.getRunTimes():
+        clipsFunctions.PrintOutput()
         return
     
     _sleepingLock.acquire()
