@@ -146,10 +146,10 @@ def main():
     
     watch_group = parser.add_argument_group('Watch options', 'Set the watch flags of the clips interpreter.')
     
-    watch_group.add_argument('--watchfunctions', '--wfunc', default=False, action='store_const', const=True, help='Enables the watch functions flag of the clips interpreter.')
-    watch_group.add_argument('--watchglobals', '--wg', default=False, action='store_const', const=True, help='Enables the watch globals flag of the clips interpreter.')
-    watch_group.add_argument('--watchfacts', '--wf', default=False, action='store_const', const=True, help='Enables the watch facts flag of the clips interpreter.')
-    watch_group.add_argument('--watchrules', '--wr', default=False, action='store_const', const=True, help='Enables the watch rules flag of the clips interpreter.')
+    watch_group.add_argument('--watchfunctions', '--wfunctions', '--wfunc', default=False, action='store_const', const=True, help='Enables the watch functions flag of the clips interpreter.')
+    watch_group.add_argument('--watchglobals', '--wglobals', '--wg', default=False, action='store_const', const=True, help='Enables the watch globals flag of the clips interpreter.')
+    watch_group.add_argument('--watchfacts', '--wfacts', '--wf', default=False, action='store_const', const=True, help='Enables the watch facts flag of the clips interpreter.')
+    watch_group.add_argument('--watchrules', '--wrules', '--wr', default=False, action='store_const', const=True, help='Enables the watch rules flag of the clips interpreter.')
     
     log_group = parser.add_argument_group('Log options', 'Set the log level of the BBCLIPS module.')
     
