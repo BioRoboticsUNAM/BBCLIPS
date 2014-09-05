@@ -129,11 +129,14 @@ def Initialize(params):
         debug = params.debug
     
     if params.file:
+        
         module_path = os.path.dirname(os.path.abspath(filePath))
         
         _clipsLock.acquire()
         clips.BuildGlobal('module_path', module_path + os.path.sep)
         _clipsLock.release()
+        
+        filePath = os.path.abspath(params.file)
         
         if filePath[-3:] == 'clp':
             
@@ -202,6 +205,7 @@ def main():
     
     parser.add_argument('--nogui', default=False, action='store_const', const=True, help='Runs the program without the GUI.')
     parser.add_argument('--debug', default=False, action='store_const', const=True, help='Show a CLIPS prompt as in an interactive CLIPS session.')
+    parser.add_argument('-n', '--steps', default=1, action='store', type=int, help='Number of steps to run when pressing enter on a debug session.')
     parser.add_argument('-f', '--file', help='Specifies the file that should be loaded (mainly for nogui usage).')
     
     watch_group = parser.add_argument_group('Watch options', 'Set the watch flags of the clips interpreter.')
@@ -230,6 +234,9 @@ def main():
                     clips.PrintRules()
                 elif s == '(agenda)':
                     clips.PrintAgenda()
+                elif s == '':
+                    clipsFunctions.Run(args.steps)
+                    clipsFunctions.PrintOutput()
                 else:
                     try:
                         _clipsLock.acquire()
@@ -239,6 +246,8 @@ def main():
                         _clipsLock.release()
                     except:
                         print 'ERROR: Clips could not run the command.'
+                        clipsFunctions.PrintOutput()
+                        _clipsLock.release()
                 s = raw_input('[CLIPS]>')
         else:
             BB.Wait()
