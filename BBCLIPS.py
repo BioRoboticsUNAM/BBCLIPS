@@ -7,12 +7,12 @@ import Tkinter as tk
 import argparse
 
 import clipsFunctions
-from clipsFunctions import clips, sleeping, _sleepingLock
+from clipsFunctions import clips, _clipsLock, sleeping, _sleepingLock
 
 import pyRobotics.BB as BB
 from pyRobotics.Messages import Command, Response
 
-from GUI import gui, clipsGUI, use_gui
+from GUI import gui, clipsGUI, use_gui, debug
 from BBFunctions import ResponseReceived, CreateSharedVar, WriteSharedVar, SubscribeToSharedVar, RunCommand
 
 defaultTimeout = 2000
@@ -28,7 +28,7 @@ def cmdTimerThread(t, cmd, cmdId):
     time.sleep(t/1000)
     clipsFunctions.Assert('(BB_timer "{0}" {1})'.format(cmd, cmdId))
     
-    if use_gui and gui.getRunTimes():
+    if (use_gui and gui.getRunTimes()) or debug:
         clipsFunctions.PrintOutput()
         return
     
@@ -49,7 +49,7 @@ def timerThread(t, sym):
     time.sleep(t/1000)
     clipsFunctions.Assert('(BB_timer {0})'.format(sym))
     
-    if use_gui and gui.getRunTimes():
+    if (use_gui and gui.getRunTimes()) or debug:
         clipsFunctions.PrintOutput()
         return
     
@@ -86,7 +86,7 @@ def sleepingTimerThread(t, sym):
     sleeping = False
     _sleepingLock.release()
     
-    if use_gui and gui.getRunTimes():
+    if (use_gui and gui.getRunTimes()) or debug:
         clipsFunctions.PrintOutput()
         return
     
@@ -104,8 +104,6 @@ def Initialize(params):
     clips.DebugConfig.FunctionsWatched = params.watchfunctions
     clips.DebugConfig.RulesWatched = params.watchrules
     
-    clips.SendCommand('(bind ?*logLevel* ' + params.log + ')')
-    
     clips.RegisterPythonFunction(SendCommand)
     clips.RegisterPythonFunction(SendResponse)
     clips.RegisterPythonFunction(setCmdTimer)
@@ -119,14 +117,75 @@ def Initialize(params):
     clips.BuildGlobal('defaultAttempts', defaultAttempts)
     
     filePath = os.path.dirname(os.path.abspath(__file__))
+
+    clips.BatchStar(os.path.join(filePath, 'CLIPS', 'utils.clp'))
     clips.BatchStar(os.path.join(filePath, 'CLIPS', 'BB_interface.clp'))
+    clipsFunctions.PrintOutput()
     
     use_gui = not params.nogui
     if use_gui:
         gui = clipsGUI()
+    else:
+        debug = params.debug
     
     if params.file:
-        gui.loadFile(os.path.join(filePath, params.file))
+        module_path = os.path.dirname(os.path.abspath(filePath))
+        
+        _clipsLock.acquire()
+        clips.BuildGlobal('module_path', module_path + os.path.sep)
+        _clipsLock.release()
+        
+        if filePath[-3:] == 'clp':
+            
+            _clipsLock.acquire()
+            clips.BatchStar(filePath)
+            clips.Reset()
+            clipsFunctions.PrintOutput()
+            _clipsLock.release()
+            print 'File Loaded!'
+            return
+        
+        queue = [os.path.basename(filePath)]
+        
+        _clipsLock.acquire()
+        while queue:
+            el = queue.pop(0).strip()
+            if el[0] == ';':
+                continue
+            
+            filePath = str(os.path.join(module_path, el))
+            
+            if el[-3:] == 'clp':
+                try:
+                    clips.BatchStar(filePath)
+                except IOError:
+                    print 'ERROR: File ' + filePath + 'could not be open. Make sure that the path is correct.'
+                except Exception as e:
+                    print 'ERROR: An error occurred trying to open file: ' + filePath
+                    print e
+            elif el[-3:] == 'lst' or el[-3:] == 'dat':
+                try:
+                    dir_path = os.path.dirname(el)
+                    f = open(filePath, 'r')
+                    queue = [str(os.path.join(dir_path, x)) for x in f.readlines() if x.strip()[0] != ';'] + queue
+                    f.close()
+                except IOError:
+                    print 'ERROR: File ' + filePath + 'could not be open. Make sure that the path is correct.'
+                except Exception as e:
+                    print 'ERROR: An error occurred trying to open file: ' + filePath
+                    print e
+            else:
+                dot = filePath.rfind('.')
+                if dot == -1:
+                    print '...Skipping file without extension: ' + filePath
+                    continue
+                print '...Skipping unknown file extension: ' + filePath[dot:] 
+        
+        clips.Reset()
+        clipsFunctions.PrintOutput()
+        _clipsLock.release()
+        
+        print 'Files Loaded!'
     
     BB.Initialize(params.port, functionMap = {'*':RunCommand}, asyncHandler = ResponseReceived)
     
@@ -142,6 +201,7 @@ def main():
     parser.add_argument('-p', '--port', default = '2000', type=int, help='States the port number that this instance module should use.')
     
     parser.add_argument('--nogui', default=False, action='store_const', const=True, help='Runs the program without the GUI.')
+    parser.add_argument('--debug', default=False, action='store_const', const=True, help='Show a CLIPS prompt as in an interactive CLIPS session.')
     parser.add_argument('-f', '--file', help='Specifies the file that should be loaded (mainly for nogui usage).')
     
     watch_group = parser.add_argument_group('Watch options', 'Set the watch flags of the clips interpreter.')
@@ -160,16 +220,30 @@ def main():
     Initialize(args)
     
     if args.nogui:
-        s = ''
-        while s != '(exit)':
-            try:
-                clips.SendCommand(s)
-            except:
-                print 'ERROR: Clips could not run the command.'
+        if args.debug:
             s = raw_input('[CLIPS]>')
+            while s != '(exit)':
+                
+                if s == '(facts)':
+                    clips.PrintFacts()
+                elif s == '(rules)':
+                    clips.PrintRules()
+                elif s == '(agenda)':
+                    clips.PrintAgenda()
+                else:
+                    try:
+                        _clipsLock.acquire()
+                        #clips.SendCommand(s, True)
+                        clips.Eval(s)
+                        clipsFunctions.PrintOutput()
+                        _clipsLock.release()
+                    except:
+                        print 'ERROR: Clips could not run the command.'
+                s = raw_input('[CLIPS]>')
+        else:
+            BB.Wait()
     else:
         tk.mainloop()
-        
 
 if __name__ == "__main__":
     main()
