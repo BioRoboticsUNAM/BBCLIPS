@@ -10,7 +10,7 @@ import clipsFunctions
 from clipsFunctions import clips, _clipsLock, sleeping, _sleepingLock
 
 import pyRobotics.BB as BB
-from pyRobotics.Messages import Command, Response
+from pyRobotics.messages import Command, Response
 
 from GUI import gui, clipsGUI, use_gui, debug
 from BBFunctions import ResponseReceived, CreateSharedVar, WriteSharedVar, SubscribeToSharedVar, RunCommand
