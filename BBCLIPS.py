@@ -9,14 +9,16 @@ import argparse
 import clipsFunctions
 from clipsFunctions import clips, _clipsLock, sleeping, _sleepingLock
 
-import pyRobotics.BB as BB
-from pyRobotics.messages import Command, Response
+import pyrobotics.BB as BB
+from pyrobotics.messages import Command, Response
 
 from GUI import gui, clipsGUI, use_gui, debug
 from BBFunctions import ResponseReceived, CreateSharedVar, WriteSharedVar, SubscribeToSharedVar, RunCommand
 
 defaultTimeout = 2000
 defaultAttempts = 1
+
+loaded_files = set([])
 
 def setCmdTimer(t, cmd, cmdId):
     t = threading.Thread(target=cmdTimerThread, args = (t, cmd, cmdId))
@@ -94,6 +96,77 @@ def sleepingTimerThread(t, sym):
     clipsFunctions.Run(gui.getRunTimes())
     clipsFunctions.PrintOutput()
 
+def load_file(filePath):
+    global loaded_files
+    
+    module_path = os.path.dirname(os.path.abspath(filePath))
+        
+    _clipsLock.acquire()
+    clips.BuildGlobal('module_path', module_path + os.path.sep)
+    _clipsLock.release()
+    
+    filePath = os.path.abspath(filePath)
+    
+    if filePath[-3:] == 'clp':
+        
+        if filePath in loaded_files:
+            return
+        loaded_files.add(filePath)
+        
+        _clipsLock.acquire()
+        clips.BatchStar(filePath)
+        clips.Reset()
+        clipsFunctions.PrintOutput()
+        _clipsLock.release()
+        print 'File Loaded!'
+        return
+    
+    queue = [os.path.basename(filePath)]
+    
+    _clipsLock.acquire()
+    while queue:
+        el = queue.pop(0).strip()
+        if el[0] == ';':
+            continue
+        
+        filePath = str(os.path.abspath(os.path.join(module_path, el)))
+        
+        if filePath in loaded_files:
+            continue
+        loaded_files.add(filePath)
+        
+        if el[-3:] == 'clp':
+            try:
+                clips.BatchStar(filePath)
+            except IOError:
+                print 'ERROR: File ' + filePath + 'could not be open. Make sure that the path is correct.'
+            except Exception as e:
+                print 'ERROR: An error occurred trying to open file: ' + filePath
+                print e
+        elif el[-3:] == 'lst' or el[-3:] == 'dat':
+            try:
+                dir_path = os.path.dirname(el)
+                f = open(filePath, 'r')
+                queue = [str(os.path.join(dir_path, x)) for x in f.readlines() if x.strip()[0] != ';'] + queue
+                f.close()
+            except IOError:
+                print 'ERROR: File ' + filePath + 'could not be open. Make sure that the path is correct.'
+            except Exception as e:
+                print 'ERROR: An error occurred trying to open file: ' + filePath
+                print e
+        else:
+            dot = filePath.rfind('.')
+            if dot == -1:
+                print '...Skipping file without extension: ' + filePath
+                continue
+            print '...Skipping unknown file extension: ' + filePath[dot:] 
+    
+    clips.Reset()
+    clipsFunctions.PrintOutput()
+    _clipsLock.release()
+    
+    print 'Files Loaded!'
+
 def Initialize(params):
     clips.Memory.Conserve = True
     clips.Memory.EnvironmentErrorsEnabled = True
@@ -129,66 +202,7 @@ def Initialize(params):
         debug = params.debug
     
     if params.file:
-        
-        module_path = os.path.dirname(os.path.abspath(filePath))
-        
-        _clipsLock.acquire()
-        clips.BuildGlobal('module_path', module_path + os.path.sep)
-        _clipsLock.release()
-        
-        filePath = os.path.abspath(params.file)
-        
-        if filePath[-3:] == 'clp':
-            
-            _clipsLock.acquire()
-            clips.BatchStar(filePath)
-            clips.Reset()
-            clipsFunctions.PrintOutput()
-            _clipsLock.release()
-            print 'File Loaded!'
-            return
-        
-        queue = [os.path.basename(filePath)]
-        
-        _clipsLock.acquire()
-        while queue:
-            el = queue.pop(0).strip()
-            if el[0] == ';':
-                continue
-            
-            filePath = str(os.path.join(module_path, el))
-            
-            if el[-3:] == 'clp':
-                try:
-                    clips.BatchStar(filePath)
-                except IOError:
-                    print 'ERROR: File ' + filePath + 'could not be open. Make sure that the path is correct.'
-                except Exception as e:
-                    print 'ERROR: An error occurred trying to open file: ' + filePath
-                    print e
-            elif el[-3:] == 'lst' or el[-3:] == 'dat':
-                try:
-                    dir_path = os.path.dirname(el)
-                    f = open(filePath, 'r')
-                    queue = [str(os.path.join(dir_path, x)) for x in f.readlines() if x.strip()[0] != ';'] + queue
-                    f.close()
-                except IOError:
-                    print 'ERROR: File ' + filePath + 'could not be open. Make sure that the path is correct.'
-                except Exception as e:
-                    print 'ERROR: An error occurred trying to open file: ' + filePath
-                    print e
-            else:
-                dot = filePath.rfind('.')
-                if dot == -1:
-                    print '...Skipping file without extension: ' + filePath
-                    continue
-                print '...Skipping unknown file extension: ' + filePath[dot:] 
-        
-        clips.Reset()
-        clipsFunctions.PrintOutput()
-        _clipsLock.release()
-        
-        print 'Files Loaded!'
+        load_file(params.file)
     
     BB.Initialize(params.port, functionMap = {'*':RunCommand}, asyncHandler = ResponseReceived)
     
