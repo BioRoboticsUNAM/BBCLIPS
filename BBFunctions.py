@@ -4,8 +4,8 @@
 '''
 from clipsFunctions import sleeping, _sleepingLock
 import clipsFunctions
-import pyRobotics.BB as BB
-from pyRobotics.messages import Response
+import pyrobotics.BB as BB
+from pyrobotics.messages import Response
 from GUI import gui, use_gui, debug
 import time
 
