@@ -198,6 +198,13 @@
 	;(printout t "Shared var updated: " ?var crlf "value: " $?values crlf)
 )
 
+(defrule BB-clear_sv_update
+	(declare (salience -10000))
+	?BB <-(BB_sv_updated $?)
+	=>
+	(retract ?BB)
+)
+
 (defrule BB-unknown-command
 	(declare (salience -10000))
 	?BB <-(BB_cmd ?cmd ?id ?params)
