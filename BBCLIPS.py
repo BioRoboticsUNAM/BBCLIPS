@@ -12,7 +12,7 @@ from clipsFunctions import clips, _clipsLock, sleeping, _sleepingLock
 import pyrobotics.BB as BB
 from pyrobotics.messages import Command, Response
 
-from GUI import gui, clipsGUI, use_gui, debug, load_file
+import GUI
 from BBFunctions import ResponseReceived, CreateSharedVar, WriteSharedVar, SubscribeToSharedVar, RunCommand
 
 defaultTimeout = 2000
@@ -28,14 +28,14 @@ def cmdTimerThread(t, cmd, cmdId):
     time.sleep(t/1000)
     clipsFunctions.Assert('(BB_timer "{0}" {1})'.format(cmd, cmdId))
     
-    if (use_gui and gui.getRunTimes()) or debug:
+    if (GUI.use_gui and GUI.gui.getRunTimes()) or GUI.debug:
         clipsFunctions.PrintOutput()
         return
     
     _sleepingLock.acquire()
     if not sleeping:
         clipsFunctions.PrintOutput()
-        clipsFunctions.Run(gui.getRunTimes())
+        clipsFunctions.Run(GUI.gui.getRunTimes())
         clipsFunctions.PrintOutput()
     _sleepingLock.release()
 
@@ -49,14 +49,14 @@ def timerThread(t, sym):
     time.sleep(t/1000)
     clipsFunctions.Assert('(BB_timer {0})'.format(sym))
     
-    if (use_gui and gui.getRunTimes()) or debug:
+    if (GUI.use_gui and GUI.gui.getRunTimes()) or GUI.debug:
         clipsFunctions.PrintOutput()
         return
     
     _sleepingLock.acquire()
     if not sleeping:
         clipsFunctions.PrintOutput()
-        clipsFunctions.Run(gui.getRunTimes())
+        clipsFunctions.Run(GUI.gui.getRunTimes())
         clipsFunctions.PrintOutput()
     _sleepingLock.release()
 
@@ -86,12 +86,12 @@ def sleepingTimerThread(t, sym):
     sleeping = False
     _sleepingLock.release()
     
-    if (use_gui and gui.getRunTimes()) or debug:
+    if (GUI.use_gui and GUI.gui.getRunTimes()) or GUI.debug:
         clipsFunctions.PrintOutput()
         return
     
     clipsFunctions.PrintOutput()
-    clipsFunctions.Run(gui.getRunTimes())
+    clipsFunctions.Run(GUI.gui.getRunTimes())
     clipsFunctions.PrintOutput()
 
 
@@ -123,14 +123,14 @@ def Initialize(params):
     clips.BatchStar(os.path.join(filePath, 'CLIPS', 'BB_interface.clp'))
     clipsFunctions.PrintOutput()
     
-    use_gui = not params.nogui
-    if use_gui:
-        gui = clipsGUI()
+    GUI.use_gui = not params.nogui
+    if GUI.use_gui:
+        GUI.gui = GUI.clipsGUI()
     else:
-        debug = params.debug
+        GUI.debug = params.debug
     
     if params.file:
-        load_file(params.file)
+        GUI.load_file(params.file)
     
     BB.Initialize(params.port, functionMap = {'*':RunCommand}, asyncHandler = ResponseReceived)
     
