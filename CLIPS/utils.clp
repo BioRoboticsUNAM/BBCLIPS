@@ -10,12 +10,8 @@
 (deffunction log-message
 	(?level ?msg1 $?msg2)
 
-	(bind ?message ?msg1)
-	(progn$ (?var $?msg2)
-		(bind ?message (str-cat ?message ?var) )
-	)
 	(if (eq ?level DEBUG) then
-		(printout ?*outlog* ?level ": " ?message crlf)
+		(printout ?*outlog* ?level ": " $?msg2 crlf)
 		(return)
 	)
 	(bind ?currentLogLevel 10)
@@ -31,7 +27,7 @@
 		(case WARNING then (bind ?lvl 10))
 	)
 	(if (>= ?lvl ?currentLogLevel) then
-		(printout ?*outlog* ?level ": " ?message crlf)
+		(printout ?*outlog* ?level ": " $?msg2 crlf)
 	)
 )
 

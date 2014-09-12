@@ -47,7 +47,7 @@ def load_file(filePath):
     _clipsLock.acquire()
     while queue:
         el = queue.pop(0).strip()
-        if el[0] == ';':
+        if el[0] == ';' or el == '':
             continue
         
         filePath = str(os.path.abspath(os.path.join(module_path, el)))
@@ -68,13 +68,14 @@ def load_file(filePath):
             try:
                 dir_path = os.path.dirname(el)
                 f = open(filePath, 'r')
-                queue = [str(os.path.join(dir_path, x)) for x in f.readlines() if x.strip()[0] != ';'] + queue
-                f.close()
+                queue = [str(os.path.join(dir_path, x)) for x in f.readlines() if x.strip() != '' and x.strip()[0] != ';'] + queue
             except IOError:
                 print 'ERROR: File ' + filePath + 'could not be open. Make sure that the path is correct.'
             except Exception as e:
                 print 'ERROR: An error occurred trying to open file: ' + filePath
                 print e
+            finally:
+                f.close()
         else:
             dot = filePath.rfind('.')
             if dot == -1:
