@@ -2,16 +2,22 @@
 ;;			GLOBALS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defglobal ?*outlog* = t)
-(defglobal ?*logLevel* = ERROR) ; INFO | WARNING | ERROR
+(defglobal ?*logLevel* = ERROR) ; INFO | WARNING | ERROR | DEBUG (print always)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;			FUNCTIONS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deffunction log-message
+	; Receives level and message chunks that would be concatenated.
+	; Level is one of: INFO | WARNING | ERROR | DEBUG (print always)
 	(?level ?msg1 $?msg2)
 
+	(bind ?message ?msg1)
+	(progn$ (?var $?msg2)
+		(bind ?message (str-cat ?message ?var) )
+	)
 	(if (eq ?level DEBUG) then
-		(printout ?*outlog* ?level ": " $?msg2 crlf)
+		(printout ?*outlog* ?level ": " ?message crlf)
 		(return)
 	)
 	(bind ?currentLogLevel 10)
@@ -27,7 +33,7 @@
 		(case WARNING then (bind ?lvl 10))
 	)
 	(if (>= ?lvl ?currentLogLevel) then
-		(printout ?*outlog* ?level ": " $?msg2 crlf)
+		(printout ?*outlog* ?level ": " ?message crlf)
 	)
 )
 
@@ -37,6 +43,7 @@
 )
 
 (deffunction setTimer
+	; Receives time in miliseconds and a symbol to identify fact that indicates the timer ran off.
 	(?time ?sym)
 	(python-call setTimer ?time ?sym)
 	(assert (timer_sent ?sym (time) (/ ?time 1000.0)))
@@ -58,6 +65,8 @@
 )
 
 (deffunction sleep
+	; Receives time in miliseconds.
+	; Prevents python from running during that time, even when messages are received.
 	(?ms)
 	(bind ?sym (gensym*))
 	(python-call sleep ?ms ?sym)
