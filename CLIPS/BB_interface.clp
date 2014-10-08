@@ -49,6 +49,7 @@
 )
 
 (deffunction send-response
+	; Receives: command, id, result and params
 	(?cmd ?id ?result ?params)
 	(python-call SendResponse ?cmd ?id ?result ?params)
 	(log-message INFO "Sent response: '" ?cmd "' - id: " ?id " - result: " ?result "params: " ?params)
