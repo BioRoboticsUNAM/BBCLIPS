@@ -18,7 +18,6 @@ In order to use this software, a python interpreter is needed (of course), as we
 
 #### To install pyRobotics
 
-You need to get the package into a folder in the python path.
 Check the pyRobotics [getting started documentation](http://bioroboticsunam.github.io/pyRobotics/gettingStarted.html).
 
 #### To install pyCLIPS
