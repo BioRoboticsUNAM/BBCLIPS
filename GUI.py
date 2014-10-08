@@ -106,6 +106,7 @@ class clipsGUI(object):
         _clipsLock.release()
         
         self.topLevelWindow = tk.Tk()
+        self.topLevelWindow.wm_title('BBCLIPS')
         self.topLevelWindow.bind_all('<KeyPress-Return>', self.runCLIPS)
 
         self.watchFactsButton = tk.Button(self.topLevelWindow, width = 20, text = 'Watch Facts', bg = 'green', activebackground = 'green', command = self.toggleFactsWatched)
