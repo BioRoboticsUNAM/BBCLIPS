@@ -9,7 +9,7 @@ import clips
 
 _clipsLock = threading.Lock()
 _sleepingLock = threading.Lock()
-sleeping = False
+_sleeping = False
 
 
 def PrintOutput():

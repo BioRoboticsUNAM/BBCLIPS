@@ -7,7 +7,7 @@ import Tkinter as tk
 import argparse
 
 import clipsFunctions
-from clipsFunctions import clips, _clipsLock, sleeping, _sleepingLock
+from clipsFunctions import clips, _clipsLock, _sleeping, _sleepingLock
 
 import pyrobotics.BB as BB
 from pyrobotics.messages import Command, Response
@@ -27,17 +27,6 @@ def setCmdTimer(t, cmd, cmdId):
 def cmdTimerThread(t, cmd, cmdId):
     time.sleep(t/1000)
     clipsFunctions.Assert('(BB_timer "{0}" {1})'.format(cmd, cmdId))
-    
-    if (GUI.use_gui and GUI.gui.getRunTimes()) or GUI.debug:
-        clipsFunctions.PrintOutput()
-        return
-    
-    _sleepingLock.acquire()
-    if not sleeping:
-        clipsFunctions.PrintOutput()
-        clipsFunctions.Run(GUI.gui.getRunTimes())
-        clipsFunctions.PrintOutput()
-    _sleepingLock.release()
 
 def setTimer(t, sym):
     t = threading.Thread(target=timerThread, args = (t, sym))
@@ -48,17 +37,6 @@ def setTimer(t, sym):
 def timerThread(t, sym):
     time.sleep(t/1000)
     clipsFunctions.Assert('(BB_timer {0})'.format(sym))
-    
-    if (GUI.use_gui and GUI.gui.getRunTimes()) or GUI.debug:
-        clipsFunctions.PrintOutput()
-        return
-    
-    _sleepingLock.acquire()
-    if not sleeping:
-        clipsFunctions.PrintOutput()
-        clipsFunctions.Run(GUI.gui.getRunTimes())
-        clipsFunctions.PrintOutput()
-    _sleepingLock.release()
 
 def SendCommand(cmdName, params):
     cmd = Command(cmdName, params)
@@ -79,19 +57,13 @@ def sleep(ms, sym):
 
 def sleepingTimerThread(t, sym):
     _sleepingLock.acquire()
-    sleeping = True
+    _sleeping = True
     _sleepingLock.release()
     time.sleep(t/1000)
     _sleepingLock.acquire()
-    sleeping = False
+    _sleeping = False
     _sleepingLock.release()
     
-    if (GUI.use_gui and GUI.gui.getRunTimes()) or GUI.debug:
-        clipsFunctions.PrintOutput()
-        return
-    
-    clipsFunctions.PrintOutput()
-    clipsFunctions.Run(GUI.gui.getRunTimes())
     clipsFunctions.PrintOutput()
 
 
@@ -177,6 +149,7 @@ def main():
                 elif s == '(agenda)':
                     clips.PrintAgenda()
                 elif s == '':
+                    clipsFunctions.PrintOutput()
                     clipsFunctions.Run(args.steps)
                     clipsFunctions.PrintOutput()
                 else:
@@ -192,9 +165,27 @@ def main():
                         _clipsLock.release()
                 s = raw_input('[CLIPS]>')
         else:
-            BB.Wait()
+            mainLoop(args.steps)
     else:
+        loop_thread  = threading.Thread(target=mainLoop)
+        loop_thread.daemon = True
+        loop_thread.start()
         tk.mainloop()
+
+def mainLoop(steps = 5):
+    
+    while True:
+        
+        _sleepingLock.acquire()
+        sleeping = _sleeping
+        _sleepingLock.release()
+        
+        if sleeping or (GUI.use_gui and GUI.gui.runTimes):
+            clipsFunctions.PrintOutput()
+            continue
+        
+        clipsFunctions.Run(steps)
+        clipsFunctions.PrintOutput()
 
 if __name__ == "__main__":
     main()

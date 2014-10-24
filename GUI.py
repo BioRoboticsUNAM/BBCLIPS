@@ -144,6 +144,8 @@ class clipsGUI(object):
         
         self.timesFrame = tk.Frame(self.topLevelWindow)
         
+        self.runTimes = 1
+        
         self.timesTextVar = tk.StringVar(value = 0)
         self.runTimesLabel = tk.Label(self.timesFrame, text = 'Run # times: (0 to run ALL)')
         self.runTimesEntry = tk.Entry(self.timesFrame, width = 2, textvariable = self.timesTextVar)
@@ -335,15 +337,6 @@ class clipsGUI(object):
         clipsFunctions.PrintOutput()
         _clipsLock.release()
     
-    def getRunTimes(self):
-        try:
-            times = int(self.timesTextVar.get())
-        except:
-            times = 0
-        self.timesTextVar.set(str(times))
-        if times < 1:
-            times = ''
-        return times
     
     def reset(self):
         clipsFunctions.Reset()
@@ -351,7 +344,16 @@ class clipsGUI(object):
         self.setLogLevel()
     
     def runCLIPS(self, *args):
-        clipsFunctions.Run(self.getRunTimes())
+        try:
+            times = int(self.timesTextVar.get())
+        except:
+            times = 0
+        self.timesTextVar.set(str(times))
+        if times < 1:
+            times = ''
+        self.runTimes = times
+    
+        clipsFunctions.Run(times)
         clipsFunctions.PrintOutput()
     
     def getFileName(self, *args):

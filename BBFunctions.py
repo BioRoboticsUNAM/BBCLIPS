@@ -2,12 +2,8 @@
 '''
 @author: arcra
 '''
-from clipsFunctions import sleeping, _sleepingLock
 import clipsFunctions
 import pyrobotics.BB as BB
-from pyrobotics.messages import Response
-import GUI
-import time
 
 #####################################################
 #                HANDLERS
@@ -15,23 +11,9 @@ import time
 
 def RunCommand(c):
     clipsFunctions.Assert('(BB_cmd "{0}" {1} "{2}")'.format(c.name, c._id, c.params))
-    clipsFunctions.PrintOutput()
-    clipsFunctions.Run()
-    clipsFunctions.PrintOutput()
-    time.sleep(1)
-    return Response.FromCommandObject(c, False, 'CLIPS was busy or not able to handle the command.')
 
 def ResponseReceived(r):
     clipsFunctions.Assert('(BB_received "{0}" {1} {2} "{3}")'.format(r.name, r._id, r.successful, r.params))
-    if (GUI.use_gui and GUI.gui.getRunTimes()) or GUI.debug:
-        clipsFunctions.PrintOutput()
-        return
-    _sleepingLock.acquire()
-    if not sleeping:
-        clipsFunctions.PrintOutput()
-        clipsFunctions.Run()
-        clipsFunctions.PrintOutput()
-    _sleepingLock.release()
 
 def SharedVarUpdated(sv):
     s = '(BB_sv_updated "' + sv.varName + '" '
@@ -56,17 +38,6 @@ def SharedVarUpdated(sv):
     
     s += ')'
     clipsFunctions.Assert(s)
-    
-    if (GUI.use_gui and GUI.gui.getRunTimes()) or GUI.debug:
-        clipsFunctions.PrintOutput()
-        return
-    
-    _sleepingLock.acquire()
-    if not sleeping:
-        clipsFunctions.PrintOutput()
-        clipsFunctions.Run()
-        clipsFunctions.PrintOutput()
-    _sleepingLock.release()
 
 #####################################################
 #          SHARED VARIABLES MANIPULATION
