@@ -351,10 +351,11 @@ class clipsGUI(object):
         self.timesTextVar.set(str(times))
         if times < 1:
             times = ''
+        else:
+            clipsFunctions.Run(times)
+            clipsFunctions.PrintOutput()
+        
         self.runTimes = times
-    
-        clipsFunctions.Run(times)
-        clipsFunctions.PrintOutput()
     
     def getFileName(self, *args):
         self.fileVar.set(tkFileDialog.askopenfilename(filetypes = [('All possible files', '.clp'), ('All possible files', '.dat'), ('All possible files', '.lst'), ('CLIPS Batch file', '.clp'), ('File list', '.dat'), ('File list', '.lst')]))

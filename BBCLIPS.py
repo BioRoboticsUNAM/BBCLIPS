@@ -165,14 +165,14 @@ def main():
                         _clipsLock.release()
                 s = raw_input('[CLIPS]>')
         else:
-            mainLoop(args.steps)
+            mainLoop()
     else:
         loop_thread  = threading.Thread(target=mainLoop)
         loop_thread.daemon = True
         loop_thread.start()
         tk.mainloop()
 
-def mainLoop(steps = 5):
+def mainLoop():
     
     while True:
         
@@ -184,7 +184,7 @@ def mainLoop(steps = 5):
             clipsFunctions.PrintOutput()
             continue
         
-        clipsFunctions.Run(steps)
+        clipsFunctions.Run(5)
         clipsFunctions.PrintOutput()
 
 if __name__ == "__main__":
