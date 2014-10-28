@@ -13,7 +13,7 @@ import pyrobotics.BB as BB
 from pyrobotics.messages import Command, Response
 
 import GUI
-from BBFunctions import ResponseReceived, CreateSharedVar, WriteSharedVar, SubscribeToSharedVar, RunCommand
+from BBFunctions import assertQueue, ResponseReceived, CreateSharedVar, WriteSharedVar, SubscribeToSharedVar, RunCommand
 
 defaultTimeout = 2000
 defaultAttempts = 1
@@ -26,7 +26,8 @@ def setCmdTimer(t, cmd, cmdId):
 
 def cmdTimerThread(t, cmd, cmdId):
     time.sleep(t/1000)
-    clipsFunctions.Assert('(BB_timer "{0}" {1})'.format(cmd, cmdId))
+    assertQueue.append('(BB_timer "{0}" {1})'.format(cmd, cmdId))
+    #clipsFunctions.Assert('(BB_timer "{0}" {1})'.format(cmd, cmdId))
 
 def setTimer(t, sym):
     t = threading.Thread(target=timerThread, args = (t, sym))
@@ -36,7 +37,8 @@ def setTimer(t, sym):
 
 def timerThread(t, sym):
     time.sleep(t/1000)
-    clipsFunctions.Assert('(BB_timer {0})'.format(sym))
+    assertQueue.append('(BB_timer {0})'.format(sym))
+    #clipsFunctions.Assert('(BB_timer {0})'.format(sym))
 
 def SendCommand(cmdName, params):
     cmd = Command(cmdName, params)
@@ -63,8 +65,6 @@ def sleepingTimerThread(t, sym):
     _sleepingLock.acquire()
     _sleeping = False
     _sleepingLock.release()
-    
-    clipsFunctions.PrintOutput()
 
 
 def Initialize(params):
@@ -149,6 +149,8 @@ def main():
                 elif s == '(agenda)':
                     clips.PrintAgenda()
                 elif s == '':
+                    assertEnqueuedFacts()
+                    
                     clipsFunctions.PrintOutput()
                     clipsFunctions.Run(args.steps)
                     clipsFunctions.PrintOutput()
@@ -172,9 +174,34 @@ def main():
         loop_thread.start()
         tk.mainloop()
 
+def assertEnqueuedFacts():
+    _clipsLock.acquire()
+        
+    while True:
+        try:
+            f = assertQueue.popleft()
+        except:
+            break
+        
+        asserted = False
+
+        while not asserted:
+            try:
+                clips.Assert(f)
+                asserted = True
+            except:
+                #print 'Fact: ' + str(f) + ' could not be asserted, trying again...'
+                pass
+            if not asserted:
+                time.sleep(50)
+    
+    _clipsLock.release()
+
 def mainLoop():
     
     while True:
+        
+        assertEnqueuedFacts()
         
         _sleepingLock.acquire()
         sleeping = _sleeping
@@ -184,7 +211,7 @@ def mainLoop():
             clipsFunctions.PrintOutput()
             continue
         
-        clipsFunctions.Run(5)
+        clipsFunctions.Run(2)
         clipsFunctions.PrintOutput()
 
 if __name__ == "__main__":

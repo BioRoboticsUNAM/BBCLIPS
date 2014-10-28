@@ -2,18 +2,22 @@
 '''
 @author: arcra
 '''
-import clipsFunctions
 import pyrobotics.BB as BB
+from collections import deque
 
 #####################################################
 #                HANDLERS
 #####################################################
 
+assertQueue = deque()
+
 def RunCommand(c):
-    clipsFunctions.Assert('(BB_cmd "{0}" {1} "{2}")'.format(c.name, c._id, c.params))
+    assertQueue.append('(BB_cmd "{0}" {1} "{2}")'.format(c.name, c._id, c.params))
+    #clipsFunctions.Assert('(BB_cmd "{0}" {1} "{2}")'.format(c.name, c._id, c.params))
 
 def ResponseReceived(r):
-    clipsFunctions.Assert('(BB_received "{0}" {1} {2} "{3}")'.format(r.name, r._id, r.successful, r.params))
+    assertQueue.append('(BB_received "{0}" {1} {2} "{3}")'.format(r.name, r._id, r.successful, r.params))
+    #clipsFunctions.Assert('(BB_received "{0}" {1} {2} "{3}")'.format(r.name, r._id, r.successful, r.params))
 
 def SharedVarUpdated(sv):
     s = '(BB_sv_updated "' + sv.varName + '" '
@@ -37,7 +41,8 @@ def SharedVarUpdated(sv):
         return
     
     s += ')'
-    clipsFunctions.Assert(s)
+    assertQueue.append(s)
+    #clipsFunctions.Assert(s)
 
 #####################################################
 #          SHARED VARIABLES MANIPULATION
