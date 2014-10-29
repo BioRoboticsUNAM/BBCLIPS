@@ -2,6 +2,9 @@
 '''
 @author: arcra
 '''
+
+import time
+
 import pyrobotics.BB as BB
 from collections import deque
 
@@ -14,6 +17,7 @@ assertQueue = deque()
 def RunCommand(c):
     assertQueue.append('(BB_cmd "{0}" {1} "{2}")'.format(c.name, c._id, c.params))
     #clipsFunctions.Assert('(BB_cmd "{0}" {1} "{2}")'.format(c.name, c._id, c.params))
+    time.sleep(3)
 
 def ResponseReceived(r):
     assertQueue.append('(BB_received "{0}" {1} {2} "{3}")'.format(r.name, r._id, r.successful, r.params))

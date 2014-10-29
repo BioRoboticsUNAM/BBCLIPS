@@ -104,7 +104,7 @@ def Initialize(params):
     if params.file:
         GUI.load_file(params.file)
     
-    BB.Initialize(params.port, functionMap = {'*':RunCommand}, asyncHandler = ResponseReceived)
+    BB.Initialize(params.port, functionMap = {'*':(RunCommand, True)}, asyncHandler = ResponseReceived)
     
     print 'Waiting for BlackBoard to connect...'
     BB.Start()
