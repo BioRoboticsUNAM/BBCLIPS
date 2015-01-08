@@ -59,9 +59,18 @@
 (defrule delete_old_timers
 	(declare (salience -1000))
 	?t <-(timer_sent ? ?time ?duration)
-	(test (> (time) (+ ?time ?duration) ) )
+	(test (>= (time) (+ ?time ?duration) ) )
 	=>
 	(retract ?t)
+)
+
+(defrule delete_old_timers
+	(declare (salience -1000))
+	?t <-(timer_sent ?sym ?time ?duration)
+	(test (< (time) (+ ?time ?duration) ) )
+	=>
+	(retract ?t)
+	(assert (timer_sent ?sym ?time ?duration))
 )
 
 (deffunction sleep
@@ -71,4 +80,20 @@
 	(bind ?sym (gensym*))
 	(python-call sleep ?ms ?sym)
 	(halt)
+)
+
+(deffunction set_delete
+	(?fact ?time_in_secs)
+	(bind ?sym (gensym*))
+	(setTimer (* ?time_in_secs 1000) ?sym)
+	(assert
+		(BB_set_delete ?fact ?sym)
+	)
+)
+
+(defrule set_delete-delete_fact
+	(BB_timer ?sym)
+	?f <-(BB_set_delete ?fact ?sym)
+	=>
+	(retract ?f ?fact)
 )
