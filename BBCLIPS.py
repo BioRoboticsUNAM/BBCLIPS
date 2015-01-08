@@ -115,7 +115,7 @@ def Initialize(params):
 def main():
     
     parser = argparse.ArgumentParser(description="Runs an instance of BBCLIPS. (CLIPS interpreter embedded in python with BB communication.)")
-    parser.add_argument('-p', '--port', default = '2000', type=int, help='States the port number that this instance module should use.')
+    parser.add_argument('-p', '--port', default = '2001', type=int, help='States the port number that this instance module should use.')
     
     parser.add_argument('--nogui', default=False, action='store_const', const=True, help='Runs the program without the GUI.')
     parser.add_argument('--debug', default=False, action='store_const', const=True, help='Show a CLIPS prompt as in an interactive CLIPS session.')

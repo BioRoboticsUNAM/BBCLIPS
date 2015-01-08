@@ -191,23 +191,15 @@
 
 ;	HANDLE SHARED VAR UPDATES
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defrule BB-set_sv_update
-	?BB <-(BB_sv_updated ?var $?values)
-	=>
-	(retract ?BB)
-	(log-message INFO "Shared var updated: " ?var "\t\t-\t\tvalue: " $?values)
-	;(printout t "Shared var updated: " ?var crlf "value: " $?values crlf)
-)
-
 (defrule BB-clear_sv_update
-	(declare (salience -10000))
+	(declare (salience -1000))
 	?BB <-(BB_sv_updated $?)
 	=>
 	(retract ?BB)
 )
 
 (defrule BB-unknown-command
-	(declare (salience -10000))
+	(declare (salience -9200))
 	?BB <-(BB_cmd ?cmd ?id ?params)
 	=>
 	(retract ?BB)

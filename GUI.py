@@ -20,13 +20,13 @@ loaded_files = set([])
 def load_file(filePath):
     global loaded_files
     
-    module_path = os.path.dirname(os.path.abspath(filePath))
+    filePath = os.path.abspath(filePath)
+    
+    module_path = os.path.dirname(filePath)
         
     _clipsLock.acquire()
     clips.BuildGlobal('module_path', module_path + os.path.sep)
     _clipsLock.release()
-    
-    filePath = os.path.abspath(filePath)
     
     if filePath[-3:] == 'clp':
         
@@ -56,21 +56,21 @@ def load_file(filePath):
             continue
         loaded_files.add(filePath)
         
-        if el[-3:] == 'clp':
+        if el[-4:] == '.clp':
             try:
                 clips.BatchStar(filePath)
             except IOError:
-                print 'ERROR: File ' + filePath + 'could not be open. Make sure that the path is correct.'
+                print 'ERROR: File ' + filePath + ' could not be open. Make sure that the path is correct.'
             except Exception as e:
                 print 'ERROR: An error occurred trying to open file: ' + filePath
                 print e
-        elif el[-3:] == 'lst' or el[-3:] == 'dat':
+        elif el[-4:] == '.lst' or el[-4:] == '.dat':
             try:
                 dir_path = os.path.dirname(el)
                 f = open(filePath, 'r')
                 queue = [str(os.path.join(dir_path, x)) for x in f.readlines() if x.strip() != '' and x.strip()[0] != ';'] + queue
             except IOError:
-                print 'ERROR: File ' + filePath + 'could not be open. Make sure that the path is correct.'
+                print 'ERROR: File ' + filePath + ' could not be open. Make sure that the path is correct.'
             except Exception as e:
                 print 'ERROR: An error occurred trying to open file: ' + filePath
                 print e
