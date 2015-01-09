@@ -46,31 +46,22 @@
 	; Receives time in miliseconds and a symbol to identify fact that indicates the timer ran off.
 	(?time ?sym)
 	(python-call setTimer ?time ?sym)
-	(assert (timer_sent ?sym (time) (/ ?time 1000.0)))
+	(assert (timer_sent ?sym) )
 )
 
 (defrule clear_timers
-	(declare (salience -1000))
+	(declare (salience -9000))
 	?t <-(BB_timer $?)
 	=>
 	(retract ?t)
 )
 
-(defrule delete_old_timers
-	(declare (salience -1000))
-	?t <-(timer_sent ? ?time ?duration)
-	(test (>= (time) (+ ?time ?duration) ) )
+(defrule delete_timer_sent
+	(declare (salience 9000))
+	(BB_timer ?sym)
+	?t <-(timer_sent ?sym)
 	=>
 	(retract ?t)
-)
-
-(defrule delete_old_timers
-	(declare (salience -1000))
-	?t <-(timer_sent ?sym ?time ?duration)
-	(test (< (time) (+ ?time ?duration) ) )
-	=>
-	(retract ?t)
-	(assert (timer_sent ?sym ?time ?duration))
 )
 
 (deffunction sleep
@@ -94,6 +85,15 @@
 (defrule set_delete-delete_fact
 	(BB_timer ?sym)
 	?f <-(BB_set_delete ?fact ?sym)
+	(test (fact-existp ?fact))
 	=>
 	(retract ?f ?fact)
+)
+
+(defrule set_delete-delete_delete_flag
+	(BB_timer ?sym)
+	?f <-(BB_set_delete ?fact ?sym)
+	(not (test (fact-existp ?fact)))
+	=>
+	(retract ?f)
 )
