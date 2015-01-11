@@ -7,11 +7,13 @@ import os
 import Tkinter as tk
 import tkFileDialog
 import tkMessageBox
+import threading
 
 from clipsFunctions import clips, _clipsLock
 import clipsFunctions
 
 use_gui = True
+_pausedLock = threading.Lock()
 gui = None
 debug = False
 
@@ -145,6 +147,7 @@ class clipsGUI(object):
         self.timesFrame = tk.Frame(self.topLevelWindow)
         
         self.runTimes = 1
+        self.paused = False
         
         self.timesTextVar = tk.StringVar(value = 0)
         self.runTimesLabel = tk.Label(self.timesFrame, text = 'Run # times: (0 to run ALL)')
@@ -344,6 +347,7 @@ class clipsGUI(object):
         self.setLogLevel()
     
     def runCLIPS(self, *args):
+        global _pausedLock
         try:
             times = int(self.timesTextVar.get())
         except:
@@ -356,6 +360,9 @@ class clipsGUI(object):
             clipsFunctions.PrintOutput()
         
         self.runTimes = times
+        _pausedLock.acquire()
+        self.paused = False
+        _pausedLock.release()
     
     def getFileName(self, *args):
         self.fileVar.set(tkFileDialog.askopenfilename(filetypes = [('All possible files', '.clp'), ('All possible files', '.dat'), ('All possible files', '.lst'), ('CLIPS Batch file', '.clp'), ('File list', '.dat'), ('File list', '.lst')]))

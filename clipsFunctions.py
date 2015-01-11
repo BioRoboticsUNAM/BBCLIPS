@@ -8,8 +8,6 @@ import threading
 import clips
 
 _clipsLock = threading.Lock()
-_sleepingLock = threading.Lock()
-_sleeping = False
 
 
 def PrintOutput():

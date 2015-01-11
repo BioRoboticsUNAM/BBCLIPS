@@ -7,7 +7,7 @@ import Tkinter as tk
 import argparse
 
 import clipsFunctions
-from clipsFunctions import clips, _clipsLock, _sleeping, _sleepingLock
+from clipsFunctions import clips, _clipsLock
 
 import pyrobotics.BB as BB
 from pyrobotics.messages import Command, Response
@@ -17,6 +17,9 @@ from BBFunctions import assertQueue, ResponseReceived, CreateSharedVar, WriteSha
 
 defaultTimeout = 2000
 defaultAttempts = 1
+
+_sleepingLock = threading.Lock()
+_sleeping = False
 
 def setCmdTimer(t, cmd, cmdId):
     t = threading.Thread(target=cmdTimerThread, args = (t, cmd, cmdId))
@@ -50,6 +53,12 @@ def SendResponse(cmdName, cmd_id, result, response):
     r = Response(cmdName, result, response)
     r._id = cmd_id
     BB.Send(r)
+
+def stop():
+    GUI._pausedLock.acquire()
+    GUI.gui.paused = True
+    GUI._pausedLock.release()
+    return True
     
 def sleep(ms, sym):
     t = threading.Thread(target=sleepingTimerThread, args = (ms, sym))
@@ -85,6 +94,7 @@ def Initialize(params):
     clips.RegisterPythonFunction(WriteSharedVar)
     clips.RegisterPythonFunction(SubscribeToSharedVar)
     clips.RegisterPythonFunction(sleep)
+    clips.RegisterPythonFunction(stop)
     
     clips.BuildGlobal('defaultTimeout', defaultTimeout)
     clips.BuildGlobal('defaultAttempts', defaultAttempts)
@@ -207,7 +217,11 @@ def mainLoop():
         sleeping = _sleeping
         _sleepingLock.release()
         
-        if sleeping or (GUI.use_gui and GUI.gui.runTimes):
+        GUI._pausedLock.acquire()
+        paused = GUI.gui.paused
+        GUI._pausedLock.release()
+        
+        if sleeping or paused or (GUI.use_gui and GUI.gui.runTimes):
             clipsFunctions.PrintOutput()
             continue
         

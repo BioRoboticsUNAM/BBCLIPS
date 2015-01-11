@@ -73,6 +73,12 @@
 	(halt)
 )
 
+(deffunction stop
+	()
+	(python-call stop)
+	(halt)
+)
+
 (deffunction set_delete
 	(?fact ?time_in_secs)
 	(bind ?sym (gensym*))
