@@ -44,7 +44,7 @@
 	(assert
 		(waiting (cmd ?cmd) (id ?id) (args ?args) (timeout ?timeout) (attempts ?attempts) (symbol ?sym) )
 	)
-	(log-message INFO "Sent command: '" ?cmd "' - id: " ?id " - timeout: " ?timeout "ms - attempts: " ?attempts)
+	(log-message INFO "Sent command: '" ?cmd "' - id: " ?id " - timeout: " ?timeout "ms - attempts: " ?attempts " - time: " (time))
 	(return ?id)
 )
 
@@ -115,7 +115,7 @@
 		(BB_answer ?cmd ?sym 0 ?args)
 	)
 	(retract ?w ?BB)
-	(log-message WARNING "Command timedout w/o attempts: '" ?cmd "' - id: " ?id " - timeout: " ?timeout "ms")
+	(log-message WARNING "Command timedout w/o attempts: '" ?cmd "' - id: " ?id " - timeout: " ?timeout "ms - time: " (time))
 )
 
 (defrule BB-waiting-timedout-with_attempts
@@ -126,7 +126,7 @@
 	)
 	=>
 	(retract ?BB)
-	(log-message WARNING "Command timedout w/ attempts: '" ?cmd "' - id: " ?id " - timeout: " ?timeout "ms - attempts: " ?attempts)
+	(log-message WARNING "Command timedout w/ attempts: '" ?cmd "' - id: " ?id " - timeout: " ?timeout "ms - attempts: " ?attempts " - time: " (time))
 	(bind ?id (python-call SendCommand ?cmd ?args))
 	(setCmdTimer ?timeout ?cmd ?id)
 	(bind ?attempts (- ?attempts 1))
@@ -139,7 +139,7 @@
 	?BB <-(BB_received ?cmd ?id 0 ?)
 	=>
 	(retract ?BB)
-	(log-message WARNING "Command failed w/ attempts: '" ?cmd "' - id: " ?id " - attempts: " ?attempts)
+	(log-message WARNING "Command failed w/ attempts: '" ?cmd "' - id: " ?id " - attempts: " ?attempts " - time: " (time))
 	(bind ?id (python-call SendCommand ?cmd ?args))
 	(setCmdTimer ?timeout ?cmd ?id)
 	(modify ?w (id ?id) (attempts (- ?attempts 1)))

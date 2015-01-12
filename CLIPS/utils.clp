@@ -75,6 +75,7 @@
 
 (deffunction stop
 	()
+	(log-message WARNING "Stop function called. EXECUTION HALTED.")
 	(python-call stop)
 	(halt)
 )
