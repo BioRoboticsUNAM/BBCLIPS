@@ -20,11 +20,11 @@ def RunCommand(c):
     time.sleep(3)
 
 def ResponseReceived(r):
-    assertQueue.append('(BB_received "{0}" {1} {2} "{3}")'.format(r.name, r._id, r.successful, r.params))
+    assertQueue.append('(BB_received "{0}" {1} {2} "{3}")'.format(r.name, r._id, r.successful, r.params.replace('"', '\\"')))
     #clipsFunctions.Assert('(BB_received "{0}" {1} {2} "{3}")'.format(r.name, r._id, r.successful, r.params))
 
 def SharedVarUpdated(sv):
-    s = '(BB_sv_updated "' + sv.varName + '" '
+    s = '(BB_set_sv_updated "' + sv.varName + '" '
     if sv.svType in [BB.SharedVarTypes.INT, BB.SharedVarTypes.LONG, BB.SharedVarTypes.DOUBLE]:
         s += str(sv.data)
     elif sv.svType in [BB.SharedVarTypes.INT_ARRAY, BB.SharedVarTypes.LONG_ARRAY, BB.SharedVarTypes.DOUBLE_ARRAY, BB.SharedVarTypes.BYTE_ARRAY]:

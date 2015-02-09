@@ -44,7 +44,7 @@
 	(assert
 		(waiting (cmd ?cmd) (id ?id) (args ?args) (timeout ?timeout) (attempts ?attempts) (symbol ?sym) )
 	)
-	(log-message INFO "Sent command: '" ?cmd "' - id: " ?id " - timeout: " ?timeout "ms - attempts: " ?attempts " - time: " (time))
+	(log-message INFO "Sent command: '" ?cmd "' - id: " ?id " - timeout: " ?timeout "ms - attempts: " ?attempts " - time: " (time) " - params: " ?args)
 	(return ?id)
 )
 
@@ -159,7 +159,7 @@
 )
 
 (defrule BB-clear-timers
-	(declare (salience -1000))
+	(declare (salience -9501))
 	?t <-(BB_timer ?cmd ?id)
 	(not
 		(waiting (cmd ?cmd) (id ?id))
@@ -170,7 +170,7 @@
 )
 
 (defrule BB-clear_response
-	(declare (salience -1000))
+	(declare (salience -9501))
 	?BB <-(BB_received ?cmd ?id $?)
 	(not
 		(waiting (cmd ?cmd) (id ?id))
@@ -181,7 +181,7 @@
 )
 
 (defrule BB-clear_answer
-	(declare (salience -1000))
+	(declare (salience -9501))
 	?BB <-(BB_answer ?cmd ?sym ?result ?params)
 	=>
 	(retract ?BB)
@@ -192,14 +192,36 @@
 ;	HANDLE SHARED VAR UPDATES
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defrule BB-clear_sv_update
-	(declare (salience -1000))
+	(declare (salience -9501))
 	?BB <-(BB_sv_updated $?)
 	=>
 	(retract ?BB)
 )
 
+(defrule BB-set_sv
+	(declare (salience 9501))
+	(not (BB_sv_updated ?name $?))
+	?f <-(BB_set_sv_updated ?name $?data)
+	=>
+	(retract ?f)
+	(assert
+		(BB_sv_updated ?name $?data)
+	)
+)
+
+(defrule BB-update_sv
+	(declare (salience 9501))
+	?BB <-(BB_sv_updated ?name $?)
+	?f <-(BB_set_sv_updated ?name $?data)
+	=>
+	(retract ?BB ?f)
+	(assert
+		(BB_sv_updated ?name $?data)
+	)	
+)
+
 (defrule BB-unknown-command
-	(declare (salience -9200))
+	(declare (salience -9501))
 	?BB <-(BB_cmd ?cmd ?id ?params)
 	=>
 	(retract ?BB)

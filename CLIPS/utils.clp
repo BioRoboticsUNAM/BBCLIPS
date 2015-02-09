@@ -37,6 +37,24 @@
 	)
 )
 
+(deffunction str-replace
+	(?str ?old ?new)
+	(bind ?len (str-length ?old))
+	(bind ?pos (str-index ?old ?str))
+	(while (neq ?pos FALSE) do
+		(bind ?str_len (str-length ?str))
+		(bind ?str
+			(str-cat
+				(sub-string 1 (- ?pos 1) ?str)
+				?new
+				(sub-string (+ ?pos ?len) ?str_len ?str)
+			)
+		)
+		(bind ?pos (str-index ?old ?str))
+	)
+	(return ?str)
+)
+
 (deffunction setCmdTimer
 	(?time ?cmd ?id)
 	(python-call setCmdTimer ?time ?cmd ?id)
@@ -50,14 +68,14 @@
 )
 
 (defrule clear_timers
-	(declare (salience -9000))
+	(declare (salience -9501))
 	?t <-(BB_timer $?)
 	=>
 	(retract ?t)
 )
 
 (defrule delete_timer_sent
-	(declare (salience 9000))
+	(declare (salience 10000))
 	(BB_timer ?sym)
 	?t <-(timer_sent ?sym)
 	=>

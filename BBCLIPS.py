@@ -28,7 +28,7 @@ def setCmdTimer(t, cmd, cmdId):
     return True
 
 def cmdTimerThread(t, cmd, cmdId):
-    time.sleep(t/1000)
+    time.sleep(t/1000.0)
     assertQueue.append('(BB_timer "{0}" {1})'.format(cmd, cmdId))
     #clipsFunctions.Assert('(BB_timer "{0}" {1})'.format(cmd, cmdId))
 
@@ -39,7 +39,7 @@ def setTimer(t, sym):
     return True
 
 def timerThread(t, sym):
-    time.sleep(t/1000)
+    time.sleep(t/1000.0)
     assertQueue.append('(BB_timer {0})'.format(sym))
     #clipsFunctions.Assert('(BB_timer {0})'.format(sym))
 
