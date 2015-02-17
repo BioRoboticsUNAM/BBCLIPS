@@ -82,6 +82,14 @@
 	(retract ?t)
 )
 
+(defrule delete_timer
+	(declare (salience 10000))
+	?t <-(BB_timer ?sym)
+	(not (timer_sent ?sym))
+	=>
+	(retract ?t)
+)
+
 (deffunction sleep
 	; Receives time in miliseconds.
 	; Prevents python from running during that time, even when messages are received.
