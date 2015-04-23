@@ -83,7 +83,7 @@
 )
 
 (defrule delete_timer
-	(declare (salience 10000))
+	(declare (salience -9501))
 	?t <-(BB_timer ?sym)
 	(not (timer_sent ?sym))
 	=>
