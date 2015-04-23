@@ -27,7 +27,10 @@ def load_file(filePath):
     module_path = os.path.dirname(filePath)
         
     _clipsLock.acquire()
-    clips.BuildGlobal('module_path', module_path + os.path.sep)
+    try:
+        clips.BuildGlobal('module_path', module_path + os.path.sep)
+    except:
+        print clips.ErrorStream.Read()
     _clipsLock.release()
     
     if filePath[-3:] == 'clp':
