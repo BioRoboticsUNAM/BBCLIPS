@@ -207,6 +207,8 @@
 	(assert
 		(BB_sv_updated ?name $?data)
 	)
+  (log-message INFO "SV_UPDATED: " ?name $?data crlf)
+;	(printout t "SV_UPDATED: " ?name " " $?data crlf)
 )
 
 (defrule BB-update_sv
@@ -217,7 +219,9 @@
 	(retract ?BB ?f)
 	(assert
 		(BB_sv_updated ?name $?data)
-	)	
+	)
+  (log-message INFO "SV_UPDATED: " ?name $?data crlf)
+;	(printout t "SV_UPDATED: " ?name " " $?data crlf)
 )
 
 (defrule BB-unknown-command
