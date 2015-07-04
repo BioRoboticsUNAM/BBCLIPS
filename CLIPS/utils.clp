@@ -63,8 +63,12 @@
 (deffunction setTimer
 	; Receives time in miliseconds and a symbol to identify fact that indicates the timer ran off.
 	(?time ?sym)
-	(python-call setTimer ?time ?sym)
-	(assert (timer_sent ?sym) )
+	(bind ?new_sym (gensym*))
+	(python-call setTimer ?time ?new_sym)
+	(assert
+		(BBCLIPS_timer ?new_sym ?sym)
+		(timer_sent ?sym)
+	)
 )
 
 (defrule clear_timers
@@ -74,20 +78,27 @@
 	(retract ?t)
 )
 
-(defrule delete_timer_sent
+(defrule timer_alarm
 	(declare (salience 10000))
-	(BB_timer ?sym)
+	?bbt <-(BB_timer ?new_sym)
+	?bbct <-(BBCLIPS_timer ?new_sym ?sym)
+	(not (BBCLIPS_timer ~?new_sym ?sym))
 	?t <-(timer_sent ?sym)
 	=>
-	(retract ?t)
+	(retract ?t ?bbt ?bbct)
+	(assert
+		(BB_timer ?sym)
+	)
 )
 
-(defrule delete_timer
-	(declare (salience -9501))
-	?t <-(BB_timer ?sym)
-	(not (timer_sent ?sym))
+(defrule timer_alarm-old_timer
+	(declare (salience 10000))
+	?bbt <-(BB_timer ?new_sym)
+	?bbct <-(BBCLIPS_timer ?new_sym ?sym)
+	;(timer_sent ?sym)
+	(BBCLIPS_timer ~?new_sym ?sym)
 	=>
-	(retract ?t)
+	(retract ?bbt ?bbct)
 )
 
 (deffunction sleep
